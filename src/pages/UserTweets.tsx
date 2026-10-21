@@ -1,7 +1,29 @@
-import React from 'react'
+import { useReducer } from 'react';
+import { useParams } from 'react-router-dom';
+import { useCurrentUser } from '../blog/AuthContext';
+//import * as api from '../blog/mockApi';
+//import TweetList from '../ui/TweetList';
+//import ProfileStats from '../ui/ProfileStats';
+//import FollowButton from '../ui/FollowButton';
 
-export const UserTweets = () => {
+export default function UserTweets() {
+  const { username = '' } = useParams();
+  const currentUser = useCurrentUser();
+  const [, refresh] = useReducer((n: number) => n + 1, 0);
+  const user = api.getUserByUsername(username);
+
+  if (!user) return <p>Usuario no encontrado.</p>;
+
+  const canFollow = user.id !== currentUser.id && !api.isFollowing(currentUser.id, user.id);
+
   return (
-    <div>UserTweets</div>
-  )
+    <section>
+      <div className="row">
+        <h1>{user.fullName}</h1>
+        {canFollow && <FollowButton targetId={user.id} onFollow={refresh} />}
+      </div>
+      <ProfileStats userId={user.id} />
+      <TweetList tweets={api.getTweetsByUser(user.id)} />
+    </section>
+  );
 }
