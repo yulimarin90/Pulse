@@ -1,5 +1,5 @@
 import type { RegisterData, Tweet, TweetWithAuthor, User } from '../blog/types';
-import { Followers } from '../pages/Followers';
+
 
 const NAMES = [
     'Ana Gomez', 'Bruno Diaz', 'Carla Mejia', 'Diego Rios', 'Elena Vargas', 'Felipe Soto',

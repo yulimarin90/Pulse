@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/mockApi';
@@ -9,7 +9,7 @@ export default function ComposeTweet() {
   const navigate = useNavigate();
   const [text, setText] = useState('');
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     api.addTweet(currentUser.id, text);
     navigate('/feed');

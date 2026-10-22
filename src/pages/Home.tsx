@@ -1,15 +1,15 @@
-import React from 'react'
+import { useCurrentUser } from '../blog/AuthContext';
+import ProfileStats from '../ui/components/ProfileStats';
 import { Link } from 'react-router-dom'
 
-export const Home = () => {
+export default function Home() {
+  const currentUser = useCurrentUser();
   return (
     <section>
         <h1> Hola, </h1>
-        <div className="actions">
-            <Link to="/" className="btn">Tweet</Link>
+            <Link to="/tweet/new" className="btn">Tweet</Link>
             <Link to="/feed" className="btn btn-outline">My feed </Link>
-            <Link to="" className="btn btn-outline">My tweets</Link>
-        </div>
+            <ProfileStats userId={currentUser.id} linked />
     </section>
     
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useCurrentUser } from '../blog/AuthContext';
-import * as api from '../blog/mockApi';
+import { useCurrentUser } from '../../blog/AuthContext';
+import * as api from '../../blog/mockApi';
 
 interface FollowButtonProps {
   targetId: number;

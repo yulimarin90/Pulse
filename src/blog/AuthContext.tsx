@@ -6,7 +6,7 @@ import type { RegisterData, User } from './types';
 interface AuthContextValue {
   currentUser: User | null;
   login: (username: string, password: string) => boolean;
-  loginWithGoogle: () => void;
+  // loginWithProvider: (provider: string) => void;
   register: (data: RegisterData) => void;
   logout: () => void;
 }
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return Boolean(user);
     },
     // Mocked: logs in as the demo user until Google auth is added with Firebase.
-    loginWithGoogle: () => setCurrentUser(api.getUserById(1) ?? null),
+    // loginWithProvider: () => setCurrentUser(api.getUserById(1) ?? null),
     register: (data) => setCurrentUser(api.registerUser(data)),
     logout: () => setCurrentUser(null),
   }), [currentUser]);

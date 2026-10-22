@@ -1,12 +1,10 @@
-import { BaseRouter } from "./routes/BaseRouter";
+import { AuthProvider } from './blog/AuthContext';
+import BaseRouter from './routes/BaseRouter';
 
-
-export const BlogApp = () => {
+export default function BlogApp() {
   return (
-    <>
-      
+    <AuthProvider>
       <BaseRouter />
-    </>
-    
+    </AuthProvider>
   );
-};
+}

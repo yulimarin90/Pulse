@@ -1,10 +1,10 @@
 import { useReducer } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
-//import * as api from '../blog/mockApi';
-//import TweetList from '../ui/TweetList';
-//import ProfileStats from '../ui/ProfileStats';
-//import FollowButton from '../ui/FollowButton';
+import * as api from '../blog/mockApi';
+import TweetList from '../ui/components/TweetList';
+import ProfileStats from '../ui/components/ProfileStats';
+import FollowButton from '../ui/components/FollowButton';
 
 export default function UserTweets() {
   const { username = '' } = useParams();
@@ -12,7 +12,7 @@ export default function UserTweets() {
   const [, refresh] = useReducer((n: number) => n + 1, 0);
   const user = api.getUserByUsername(username);
 
-  if (!user) return <p>Usuario no encontrado.</p>;
+  if (!user) return <p>User not found</p>;
 
   const canFollow = user.id !== currentUser.id && !api.isFollowing(currentUser.id, user.id);
 

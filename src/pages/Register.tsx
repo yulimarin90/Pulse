@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, SyntheticEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../blog/AuthContext';
 import type { RegisterData } from '../blog/types';
@@ -13,7 +13,7 @@ export default function Register() {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     register(form);
     navigate('/');
@@ -21,15 +21,15 @@ export default function Register() {
 
   return (
     <div className="auth-card">
-      <h1>Registro</h1>
+      <h1>User registration</h1>
       <form onSubmit={handleSubmit}>
-        <label>Nombre completo<input name="fullName" value={form.fullName} onChange={handleChange} required /></label>
-        <label>Nombre de usuario<input name="username" value={form.username} onChange={handleChange} required /></label>
-        <label>Correo electrónico<input name="email" type="email" value={form.email} onChange={handleChange} required /></label>
-        <label>Contraseña<input name="password" type="password" value={form.password} onChange={handleChange} required /></label>
-        <button type="submit" className="btn">Registrarse</button>
+        <label>Fullname<input name="fullName" value={form.fullName} onChange={handleChange} required /></label>
+        <label>Username<input name="username" value={form.username} onChange={handleChange} required /></label>
+        <label>Email<input name="email" type="email" value={form.email} onChange={handleChange} required /></label>
+        <label>Password<input name="password" type="password" value={form.password} onChange={handleChange} required /></label>
+        <button type="submit" className="btn">Register</button>
       </form>
-      <p><Link to="/login">Iniciar sesión</Link></p>
+      <p><Link to="/login">Login</Link></p>
     </div>
   );
 }
