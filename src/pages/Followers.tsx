@@ -1,7 +1,13 @@
-import React from 'react'
+import { useCurrentUser } from '../blog/AuthContext';
+import * as api from '../blog/mockApi';
+import UserList from '../ui/components/UserList';
 
-export const Followers = () => {
+export default function Followers() {
+  const currentUser = useCurrentUser();
   return (
-    <div>Followers</div>
-  )
+    <section>
+      <h1>Seguidores</h1>
+      <UserList users={api.getFollowers(currentUser.id)} showFollow />
+    </section>
+  );
 }

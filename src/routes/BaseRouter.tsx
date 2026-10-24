@@ -4,8 +4,8 @@ import Register from '../pages/Register';
 import Login from '../pages/Login';
 import Home  from '../pages/Home';
 import ComposeTweet from '../pages/ComposeTweet';
-import { Following } from '../pages/Following';
-import { Followers } from '../pages/Followers';
+import  Following  from '../pages/Following';
+import  Followers  from '../pages/Followers';
 import UserTweets from '../pages/UserTweets';
 import Feed from '../pages/Feed';
 
