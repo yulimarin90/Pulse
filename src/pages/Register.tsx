@@ -3,6 +3,7 @@ import type { ChangeEvent, SyntheticEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../blog/AuthContext';
 import type { RegisterData } from '../blog/types';
+import Xlogo from '../ui/components/Xlogo';
 
 export default function Register() {
   const { currentUser, register } = useAuth();
@@ -21,6 +22,7 @@ export default function Register() {
 
   return (
     <div className="auth-card">
+      <div className="auth-logo"><Xlogo size={36} /></div>
       <h1>User registration</h1>
       <form onSubmit={handleSubmit}>
         <label>Fullname<input name="fullName" value={form.fullName} onChange={handleChange} required /></label>
@@ -29,7 +31,7 @@ export default function Register() {
         <label>Password<input name="password" type="password" value={form.password} onChange={handleChange} required /></label>
         <button type="submit" className="btn">Register</button>
       </form>
-      <p><Link to="/login">Login</Link></p>
+      <p className="muted"><Link to="/login" className="accent">Login</Link></p>
     </div>
   );
 }

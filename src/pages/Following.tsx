@@ -6,7 +6,7 @@ export default function Following() {
   const currentUser = useCurrentUser();
   return (
     <section>
-      <h1>Seguidos</h1>
+      <h1>Following</h1>
       <UserList users={api.getFollowing(currentUser.id)} />
     </section>
   );

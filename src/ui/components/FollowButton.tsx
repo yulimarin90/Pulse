@@ -22,7 +22,7 @@ export default function FollowButton({ targetId, onFollow }: FollowButtonProps) 
         if (onFollow) onFollow();
       }}
     >
-      [Seguir]
+      [Continue]
     </button>
   );
 }

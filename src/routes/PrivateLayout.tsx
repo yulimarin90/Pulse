@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../blog/AuthContext';
-// import Header from '../ui/Header';
+import Header from '../ui/components/Header';
 
 // Layout for pages that require a logged-in user: common header + page content.
 export default function PrivateLayout() {
@@ -8,7 +8,7 @@ export default function PrivateLayout() {
   if (!currentUser) return <Navigate to="/login" replace />;
   return (
     <>
-      {/* <Header /> */}
+      <Header /> 
       <main className="container">
         <Outlet />
       </main>

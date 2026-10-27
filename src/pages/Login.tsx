@@ -2,8 +2,11 @@ import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../blog/AuthContext';
+import ProviderButton from '../ui/components/ProviderButton';
+import type { Provider } from '../ui/components/ProviderButton';
+import Xlogo from '../ui/components/Xlogo';
 
-const PROVIDERS = ['Google', 'GitHub', 'Facebook', 'Microsoft'];
+const PROVIDERS: Provider[] = ['Google', 'GitHub', 'Facebook', 'Microsoft'];
 
 export default function Login() {
   const { currentUser, login } = useAuth();
@@ -22,6 +25,7 @@ export default function Login() {
 
   return (
     <div className="auth-card">
+      <div className="auth-logo"><Xlogo size={36} /></div>
       <h1>Login</h1>
       <form onSubmit={handleSubmit}>
         <label>Username<input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required /></label>
@@ -29,19 +33,13 @@ export default function Login() {
         {error && <p className="error">{error}</p>}
         <button type="submit" className="btn">Enter</button>
       </form>
+      <div className="divider"><span>o</span></div>
+      <p className="jf-element">Selecciona una opción a continuación:</p>
       {PROVIDERS.map((provider) => (
-        <button
-          key={provider}
-          type="button"
-          className="btn btn-outline"
-          onClick={() => setProviderMessage('button disabled')}
-          // onClick={() => { loginWithProvider(provider); navigate('/'); }}
-        >
-          Continue with {provider}
-        </button>
+        <ProviderButton key={provider} provider={provider} onClick={() => setProviderMessage('Disabled Button')} />
       ))}
       {providerMessage && <p className="error">{providerMessage}</p>}
-      <p><Link to="/register">Register</Link></p>
+      <p className="muted"><Link to="/register" className="accent">Register</Link></p>
     </div>
   );
 }

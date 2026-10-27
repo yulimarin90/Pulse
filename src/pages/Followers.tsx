@@ -6,7 +6,7 @@ export default function Followers() {
   const currentUser = useCurrentUser();
   return (
     <section>
-      <h1>Seguidores</h1>
+      <h1>Followers</h1>
       <UserList users={api.getFollowers(currentUser.id)} showFollow />
     </section>
   );

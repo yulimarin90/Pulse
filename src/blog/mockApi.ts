@@ -9,7 +9,8 @@ const NAMES = [
 ];
 
 const users: User[] = [
-  { id: 1, fullName: 'Juan Perez', username: 'juanp', email: 'juan@example.com' },
+  { id: 1, fullName: 'Sebastian Cardona', username: 'sebastianc', email: 'sebastian@example.com' },
+  { id: 2, fullName: 'Yuli Marin', username: 'yulim', email: 'yuli@example.com' },
   ...NAMES.map((fullName, i) => ({
     id: i + 2,
     fullName,
