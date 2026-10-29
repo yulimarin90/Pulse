@@ -22,7 +22,7 @@ export default function UserTweets() {
         <h1>{user.fullName}</h1>
         {canFollow && <FollowButton targetId={user.id} onFollow={refresh} />}
       </div>
-      <ProfileStats userId={user.id} />
+      <ProfileStats userId={user.id} linked />
       <TweetList tweets={api.getTweetsByUser(user.id)} />
     </section>
   );

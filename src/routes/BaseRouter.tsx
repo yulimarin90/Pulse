@@ -2,32 +2,36 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import PrivateLayout from './PrivateLayout';
 import Register from '../pages/Register';
 import Login from '../pages/Login';
-import Home  from '../pages/Home';
+import Home from '../pages/Home';
 import ComposeTweet from '../pages/ComposeTweet';
-import  Following  from '../pages/Following';
-import  Followers  from '../pages/Followers';
+import Following from '../pages/Following';
+import Followers from '../pages/Followers';
 import UserTweets from '../pages/UserTweets';
 import Feed from '../pages/Feed';
-
 
 export default function BaseRouter() {
   return (
     <>
-          <Routes>
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
 
-            <Route element={<PrivateLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/tweet/new" element={<ComposeTweet />} />
-              <Route path="/following" element={<Following />} />
-              <Route path="/followers" element={<Followers />} />
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/users/:username" element={<UserTweets />} />
-            </Route>
+        <Route element={<PrivateLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/tweet/new" element={<ComposeTweet />} />
+          <Route path="/following" element={<Following />} />
+          <Route path="/followers" element={<Followers />} />
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/users/:username" element={<UserTweets />} />
+          
+          {/* Rutas añadidas para los iconos de la barra inferior */}
+          <Route path="/search" element={<div>Buscar personas</div>} />
+          <Route path="/notifications" element={<div>Notificaciones</div>} />
+          <Route path="/messages" element={<div>Mensajes</div>} />
+        </Route>
 
-            <Route path="/*" element={<Navigate to="/" replace />} />
-          </Routes>
-      </>
-  )
+        <Route path="/*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  );
 }

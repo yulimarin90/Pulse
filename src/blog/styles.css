@@ -78,3 +78,144 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
 .provider-facebook:hover { background: #166fe5; }
 .provider-microsoft { background: #fff; color: #5e5e5e; border-color: #8c8c8c; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-size: 15px; font-weight: 600; }
 .provider-microsoft:hover { background: #f2f2f2; }
+
+/* bottom menu structure */
+.home-page { width: 100%; padding-bottom: 60px; }
+.bottom-icon-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px;  background-color: #000000; border-top: 1px solid #2f3336; display: flex; justify-content: space-around; align-items: center; padding: 10px 0; z-index: 100;}
+.nav-icon-btn { display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 50%; transition: background-color 0.2s; }
+.nav-icon-btn svg { width: 24px;
+  height: 24px;
+  fill: #ffffff; 
+}
+
+.nav-icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Header superior estilizado */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #2f3336;
+  background-color: #000000;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-btn-text {
+  color: #1d9bf0;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.header-btn-text:hover {
+  text-decoration: underline;
+}
+
+.username-display {
+  color: #71767b;
+  font-size: 14px;
+}
+
+/* Pestañas For you / Following */
+.feed-tabs {
+  display: flex;
+  border-bottom: 1px solid #2f3336;
+  background-color: #000000;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #71767b;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 0;
+  cursor: pointer;
+  transition: color 0.2s;
+  position: relative;
+  text-align: center;
+}
+
+.tab-btn:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #e7e9ea;
+}
+
+.tab-btn.active {
+  color: #e7e9ea;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 4px;
+  background-color: #1d9bf0;
+  border-radius: 2px;
+}
+
+.home-content {
+  padding: 20px 16px;
+  color: #e7e9ea;
+}
+
+.post-add-btn {
+  background-color: #1d9bf0;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.post-add-btn:hover {
+  background-color: #1a8cd8;
+}
+
+.header-link {
+  color: #1d9bf0;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.header-link:hover {
+  text-decoration: underline;
+}
+.post-add-btn {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: #1d9bf0;
+  border-radius: 50%;
+}
+
+.header-link {
+  color: #1d9bf0;
+  text-decoration: none;
+  font-weight: 600;
+}

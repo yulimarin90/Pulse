@@ -23,9 +23,17 @@ export default function Header() {
             </svg>
           </button>
         )}
-      <Link to="/" className="logo" aria-label="Home"><Xlogo /></Link>
+        <Link to="/" className="logo" aria-label="Home"><Xlogo /></Link>
       </div>
       <div className="header-right">
+        <Link to="/tweet/new" className="post-add-btn" title="Post nuevo" style={{ textDecoration: 'none', color: '#1d9bf0', fontWeight: 'bold', fontSize: '20px' }}>
+          +
+        </Link>
+
+
+        <Link to={`/users/${currentUser.username}`} className="header-link" style={{ textDecoration: 'none', color: '#1d9bf0', fontWeight: '600' }}>
+          My feed
+        </Link>
         <span>@{currentUser.username}</span>
         <button type="button" className="link-button" onClick={logout}>logout</button>
       </div>
