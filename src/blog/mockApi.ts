@@ -1,34 +1,37 @@
 import type { RegisterData, Tweet, TweetWithAuthor, User } from '../blog/types';
 
 
-const NAMES = [
-    'Ana Gomez', 'Bruno Diaz', 'Carla Mejia', 'Diego Rios', 'Elena Vargas', 'Felipe Soto',
-    'Gabriela Luna', 'Hugo Castaño', 'Isabel Mora', 'Jorge Pardo', 'Karen Ospina', 
-    'Luis Zapata', 'Maria Rendon', 'Nicolas Gil', 'Olga Cano', 'Pablo Uribe', 
-    'Ramiro Duque', 'Sebastian Cardona', 'Tatiana Ruiz', 'Yuli Marin',
+const FIRST_NAMES = [
+  'Ana', 'Bruno', 'Carla', 'Diego', 'Elena', 'Felipe', 'Gabriela', 'Hugo', 'Isabel', 'Jorge',
+  'Karen', 'Luis', 'Marta', 'Nicolas', 'Olga', 'Pablo', 'Sofia', 'Tomas', 'Valeria', 'Camilo',
 ];
+const LAST_NAMES = ['Gomez', 'Diaz', 'Mejia', 'Rios', 'Vargas'];
 
+// 100 users: user 1 plus 99 generated (20 first names x 5 last names, all unique).
 const users: User[] = [
-  { id: 1, fullName: 'Sebastian Cardona', username: 'sebastianc', email: 'sebastian@example.com' },
-  { id: 2, fullName: 'Yuli Marin', username: 'yulim', email: 'yuli@example.com' },
-  ...NAMES.map((fullName, i) => ({
-    id: i + 2,
-    fullName,
-    username: fullName.split(' ')[0].toLowerCase(),
-    email: `user${i + 2}@example.com`,
-  })),
+  { id: 1, fullName: 'Sebastian Cardona', username: 'sebastianc', email: 'sebastian.cardona@example.com' },
+  { id: 2, fullName: 'Yuli Marin', username: 'yulim', email: 'yuli.marin@example.com' },
+  ...Array.from({ length: 99 }, (_, i) => {
+    const first = FIRST_NAMES[i % FIRST_NAMES.length];
+    const last = LAST_NAMES[Math.floor(i / FIRST_NAMES.length)];
+    return {
+      id: i + 2,
+      fullName: `${first} ${last}`,
+      username: `${first}${last}`.toLowerCase(),
+      email: `${first}.${last}@example.com`.toLowerCase(),
+    };
+  }),
 ];
 
-//followers id
-const follows: Array<[number, number]> =[];
-for (let id = 2; id <= 12; id += 1) follows.push([1, id]); //user 1 follows 11 users
-for (let id = 3; id <= 13; id += 1) follows.push([id, 1]); // 11 users follow user 1
+// [followerId, followedId]
+const follows: Array<[number, number]> = [];
+for (let id = 2; id <= 45; id += 1) follows.push([1, id]); // user 1 follows 44 users
+for (let id = 30; id <= 80; id += 1) follows.push([id, 1]); // 51 users follow user 1
 
-
-//Create a list of test tweets, setting the count to 30 so that it displays pagination as 3 of 3
-const tweets: Tweet[] = Array.from({ length: 24 }, (_, i) => ({
+// 100 tweets spread across users 1 to 8.
+const tweets: Tweet[] = Array.from({ length: 100 }, (_, i) => ({
   id: i + 1,
-  userId: (i % 2) + 1,
+  userId: (i % 8) + 1,
   text: `Mock tweet #${i + 1}`,
   createdAt: Date.now() - i * 3600 * 1000,
 }));
