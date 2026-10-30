@@ -18,16 +18,41 @@ p { margin: 0; }
 
 /* Layout: one centered column with side borders, like X */
 .container, .header { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
-.container { min-height: 100vh; }
-.container > section > .btn { margin: 16px; }
+.container { min-height: 100vh; padding-bottom: 70px; } /* room for the bottom icon bar */
+.row { display: flex; align-items: center; justify-content: space-between; padding-right: 16px; }
+
+/* Top header */
 .header { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
-.header-right { display: flex; gap: 16px; align-items: center; color: var(--muted); }
 .header-left { display: flex; align-items: center; gap: 12px; }
+.header-right { display: flex; gap: 16px; align-items: center; color: var(--muted); }
 .logo { display: flex; color: var(--text); }
+.back-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; background: transparent; color: var(--text); border: 0; border-radius: 50%; cursor: pointer; }
+.back-btn:hover { background: rgba(231, 233, 234, 0.1); }
+.header-link { color: var(--blue); font-weight: 600; font-size: 14px; }
+.header-link:hover { text-decoration: underline; }
 .link-button { background: none; border: 0; color: var(--blue); cursor: pointer; font: inherit; }
+
+/* Blue circle with a white "+" (new tweet) */
+.post-add-btn { position: relative; display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background-color: var(--blue); transition: background-color 0.2s; }
+.post-add-btn:hover { background-color: #1a8cd8; }
+.post-add-btn::before, .post-add-btn::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; border-radius: 2px; }
+.post-add-btn::before { width: 14px; height: 2.5px; }
+.post-add-btn::after { width: 2.5px; height: 14px; }
+
+/* Bottom icon bar */
+.bottom-icon-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background-color: #000; border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 10px 0; z-index: 100; }
+.nav-icon-btn { display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 50%; transition: background-color 0.2s; }
+.nav-icon-btn svg { width: 24px; height: 24px; fill: #fff; }
+.nav-icon-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+/* Counters: links (home, followers, following) and buttons (profile) */
 .stats { display: flex; gap: 20px; padding: 0 16px 16px; color: var(--muted); }
 .stats strong { color: var(--text); }
 .stats a:hover { text-decoration: underline; }
+.stats a.active { color: var(--text); text-decoration: underline; text-decoration-color: var(--blue); text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.stats .stat-btn { padding: 6px 14px; background: transparent; color: var(--muted); border: 1px solid #536471; border-radius: 999px; font: inherit; cursor: pointer; }
+.stats .stat-btn:hover { background: var(--hover); }
+.stats .stat-btn.active { color: var(--text); border-color: var(--blue); background: rgba(29, 155, 240, 0.1); }
 
 /* Buttons */
 .btn { display: inline-block; min-height: 36px; padding: 0 20px; line-height: 36px; border: 0; border-radius: 999px; background: var(--blue); color: #fff; font: inherit; font-weight: 700; text-align: center; cursor: pointer; }
@@ -42,6 +67,13 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color:
 input, textarea { padding: 12px; background: transparent; color: var(--text); border: 1px solid #333639; border-radius: 4px; font: inherit; font-size: 17px; }
 textarea { resize: vertical; }
 input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+
+/* Tabs (Followers / Following) */
+.feed-tabs { display: flex; border-bottom: 1px solid var(--border); background-color: #000; }
+.tab-btn { position: relative; flex: 1; padding: 14px 0; background: transparent; border: none; color: var(--muted); font-size: 15px; font-weight: 700; text-align: center; cursor: pointer; transition: color 0.2s; }
+.tab-btn:hover { background-color: var(--hover); color: var(--text); }
+.tab-btn.active { color: var(--text); }
+.tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 56px; height: 4px; background-color: var(--blue); border-radius: 2px; }
 
 /* Lists (users and tweets) */
 .list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
@@ -78,160 +110,3 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
 .provider-facebook:hover { background: #166fe5; }
 .provider-microsoft { background: #fff; color: #5e5e5e; border-color: #8c8c8c; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-size: 15px; font-weight: 600; }
 .provider-microsoft:hover { background: #f2f2f2; }
-
-/* bottom menu structure */
-.home-page { width: 100%; padding-bottom: 60px; }
-.bottom-icon-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px;  background-color: #000000; border-top: 1px solid #2f3336; display: flex; justify-content: space-around; align-items: center; padding: 10px 0; z-index: 100;}
-.nav-icon-btn { display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 50%; transition: background-color 0.2s; }
-.nav-icon-btn svg { width: 24px;
-  height: 24px;
-  fill: #ffffff; 
-}
-.container { 
-  padding-bottom: 70px; 
-}
-
-.nav-icon-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Header superior estilizado */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid #2f3336;
-  background-color: #000000;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-btn-text {
-  color: #1d9bf0;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.header-btn-text:hover {
-  text-decoration: underline;
-}
-
-.username-display {
-  color: #71767b;
-  font-size: 14px;
-}
-
-/* Pestañas For you / Following */
-.feed-tabs {
-  display: flex;
-  border-bottom: 1px solid #2f3336;
-  background-color: #000000;
-}
-
-  .row { 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
-    padding-right: 16px; 
-  }
-
-.tab-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #71767b;
-  font-weight: 700;
-  font-size: 15px;
-  padding: 14px 0;
-  cursor: pointer;
-  transition: color 0.2s;
-  position: relative;
-  text-align: center;
-}
-
-.tab-btn:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-  color: #e7e9ea;
-}
-
-.tab-btn.active {
-  color: #e7e9ea;
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 4px;
-  background-color: #1d9bf0;
-  border-radius: 2px;
-}
-
-.home-content {
-  padding: 20px 16px;
-  color: #e7e9ea;
-}
-
-.post-add-btn {
-  background-color: #1d9bf0;
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 18px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.post-add-btn:hover {
-  background-color: #1a8cd8;
-}
-
-.header-link {
-  color: #1d9bf0;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.header-link:hover {
-  text-decoration: underline;
-}
-.post-add-btn {
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background-color: #1d9bf0;
-  border-radius: 50%;
-}
-
-.header-link {
-  color: #1d9bf0;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-/* Home: profile card and active counter */
-.profile-card { display: flex; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border); }
-.profile-info { display: flex; flex-direction: column; }
-.profile-info .stats { padding: 6px 0 0; }
-.stats a.active { color: var(--text); text-decoration: underline; text-decoration-color: var(--blue); text-decoration-thickness: 3px; text-underline-offset: 6px; }

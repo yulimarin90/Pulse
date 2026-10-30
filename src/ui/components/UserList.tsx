@@ -8,9 +8,10 @@ import Avatar from './Avatar';
 interface UserListProps {
   users: User[];
   showFollow?: boolean;
+  onFollow?: () => void;
 }
 
-export default function UserList({ users, showFollow = false }: UserListProps) {
+export default function UserList({ users, showFollow = false, onFollow }: UserListProps) {
   const { pageItems, page, totalPages, setPage } = usePagination(users);
 
   return (
@@ -25,7 +26,7 @@ export default function UserList({ users, showFollow = false }: UserListProps) {
                 <span className="muted">@{user.username}</span>
               </span>
             </Link>
-            {showFollow && <FollowButton targetId={user.id} />}
+            {showFollow && <FollowButton targetId={user.id} onFollow={onFollow} />}
           </li>
         ))}
       </ul>
