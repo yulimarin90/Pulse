@@ -110,3 +110,10 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
 .provider-facebook:hover { background: #166fe5; }
 .provider-microsoft { background: #fff; color: #5e5e5e; border-color: #8c8c8c; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-size: 15px; font-weight: 600; }
 .provider-microsoft:hover { background: #f2f2f2; }
+
+/* Tabs (For You / Following) */
+.tabs-container { display: flex; border-bottom: 1px solid var(--border); background-color: #000; }
+.tab-item { position: relative; flex: 1; padding: 14px 0; background: transparent; border: none; color: var(--muted); font-size: 15px; font-weight: 700; text-align: center; cursor: pointer; transition: color 0.2s; }
+.tab-btn:hover { background-color: var(--hover); color: var(--text); }
+.tab-item.active { color: var(--text); }
+.tab-item.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 56px; height: 4px; background-color: var(--blue); border-radius: 2px; }
