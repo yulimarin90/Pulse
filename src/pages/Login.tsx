@@ -19,7 +19,7 @@ export default function Login() {
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (login(form.username, form.password)) navigate('/');
+    if (login(form.username, form.password)) navigate('/feed');
     else setError('User not found');
   };
 

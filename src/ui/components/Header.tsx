@@ -10,7 +10,7 @@ export default function Header() {
 
   const goBack = () => {
     if (key !== 'default') navigate(-1);
-    else navigate('/');
+    else navigate('/feed');
   };
 
   return (

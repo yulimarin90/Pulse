@@ -1,10 +1,5 @@
 Bitácora de Desarrollo - Proyecto Clón de X
 
-Fecha: 19/10/2026 
-- Herramienta y Modelo: Gemini (Google)
-- Mensaje del Usuario: ¿cómo estructuro los tipos en TypeScript para que el modelo de usuarios y tweets funcione bien con los datos quemados sin complicarme mucho con interfaces anidadas?
-- Resumen de la Respuesta: Se propuso definir interfaces claras para User, Tweet y TweetWithAuthor, separando la relación de autor en una función auxiliar simulada (withAuthor) para mantener el tipado limpio y modular.
-- Archivos Creados o Modificados: src/types/index.ts, src/services/mockApi.ts
 
 Fecha: 19/10/2026 
 - Herramienta y Modelo: Gemini (Google)
@@ -30,6 +25,11 @@ Fecha: 21/10/2026
 - Resumen de la Respuesta: Se diseñó una función utilitaria de paginación basada en índices de arreglos (slice) que calcula las porciones de datos según la página actual y el límite fijo establecido.
 - Archivos Creados o Modificados: src/utils/paginateNest.js, src/pages/Feed.tsx
 
+Fecha: 21/10/2026 - 5:00 PM
+- Herramienta y Modelo: Cloud
+-Mensaje del Usuario: Se le mando un Prompt para que nos indicara varios nombres al azar en orden alfabetico
+-Resumen de respuesta: Nos da un ejemplo de codigo
+
 Fecha: 21/10/2026 
 - Herramienta y Modelo: Gemini (Google)
 - Mensaje del Usuario: Necesito validar que los nombres de usuario y correos no se repitan al registrarse usando los datos simulados. ¿Cómo lo estructuro?
@@ -49,4 +49,17 @@ Fecha: 23/10/2026
 - Archivos Creados o Modificados: src/components/ChirpCard.tsx, src/pages/Feed.tsx
 
 Fecha: 27/10/2026 - 5:00 PM
-- Herramienta y Modelo: 
+- Herramienta y Modelo: Cloud
+- Mensaje del Usuario: ¿Como puedo poner que los botones de github, microsoft, google y facebook aparezcan con los botones originales en react
+-Resumen de respuesta: Nos da un ejemplo de codigo
+
+Fecha: 27/10/2026 - 6:00 PM
+- Herramienta y Modelo: Cloud
+-Mensaje del Usuario: Ayudame a poner una P para el logo de la pestaña de la pagina
+-Resumen de respuesta: Nos da un ejemplo de codigo
+
+
+Fecha: 28/10/2026 - 11:00 PM
+- Herramienta y Modelo: Pagina Reactrouter
+-Mensaje del Usuario: se busco ayuda de documentación con la parte de NavLink
+-Resumen de respuesta: Nos basamos en ejemplos de codigo para realizar diseño de los menus.
