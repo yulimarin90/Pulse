@@ -23,7 +23,10 @@ export default function Header() {
             </svg>
           </button>
         )}
-        <Link to="/" className="logo" aria-label="Home"><Xlogo /></Link>
+
+        {/* <Link to="/" className="logo" aria-label="Home"><Xlogo /></Link> */}
+        <span className="logo"><Xlogo /></span>
+        
       </div>
       <div className="header-right">
         <Link to="/tweet/new" className="post-add-btn" title="Post nuevo" style={{ textDecoration: 'none', color: '#1d9bf0', fontWeight: 'bold', fontSize: '20px' }}>
