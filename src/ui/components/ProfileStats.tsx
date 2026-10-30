@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import * as api from '../../blog/mockApi';
 
 interface ProfileStatsProps {
@@ -9,12 +9,16 @@ interface ProfileStatsProps {
 export default function ProfileStats({ userId, linked = false }: ProfileStatsProps) {
     const followers = api.getFollowers(userId).length;
     const following = api.getFollowing(userId).length;
-    const label = (count: number, text: string) => <><strong>{count}</strong> {text}</>;
+
+    const stat = (to: string, count: number, text: string) => {
+    const content = <><strong>{count}</strong> {text}</>;
+    return linked ? <NavLink to={to}>{content}</NavLink> : <span>{content}</span>;
+  };
 
   return (
     <div className="stats">
-        {linked ? <Link to="/followers">{label(followers, 'Seguidores')}</Link> : <span>{label(followers, 'Seguidores')}</span>}
-        {linked ? <Link to="/following">{label(following, 'Seguidos')}</Link> : <span>{label(following, 'Seguidos')}</span>}
+      {stat('/followers', followers, 'followers')}
+      {stat('/following', following, 'following')}
     </div>
   );
 }

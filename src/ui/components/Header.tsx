@@ -32,7 +32,7 @@ export default function Header() {
 
 
         <Link to={`/users/${currentUser.username}`} className="header-link" style={{ textDecoration: 'none', color: '#1d9bf0', fontWeight: '600' }}>
-          My feed
+          Profile
         </Link>
         <span>@{currentUser.username}</span>
         <button type="button" className="link-button" onClick={logout}>logout</button>

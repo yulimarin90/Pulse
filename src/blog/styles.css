@@ -87,6 +87,9 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
   height: 24px;
   fill: #ffffff; 
 }
+.container { 
+  padding-bottom: 70px; 
+}
 
 .nav-icon-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
@@ -130,6 +133,13 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
   border-bottom: 1px solid #2f3336;
   background-color: #000000;
 }
+
+  .row { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    padding-right: 16px; 
+  }
 
 .tab-btn {
   flex: 1;
@@ -219,3 +229,9 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
   text-decoration: none;
   font-weight: 600;
 }
+
+/* Home: profile card and active counter */
+.profile-card { display: flex; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border); }
+.profile-info { display: flex; flex-direction: column; }
+.profile-info .stats { padding: 6px 0 0; }
+.stats a.active { color: var(--text); text-decoration: underline; text-decoration-color: var(--blue); text-decoration-thickness: 3px; text-underline-offset: 6px; }

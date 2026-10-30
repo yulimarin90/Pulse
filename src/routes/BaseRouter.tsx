@@ -25,9 +25,9 @@ export default function BaseRouter() {
           <Route path="/users/:username" element={<UserTweets />} />
           
           {/* Rutas añadidas para los iconos de la barra inferior */}
-          <Route path="/search" element={<div>Buscar personas</div>} />
-          <Route path="/notifications" element={<div>Notificaciones</div>} />
-          <Route path="/messages" element={<div>Mensajes</div>} />
+          <Route path="/search" element={<div>Search for people</div>} />
+          <Route path="/notifications" element={<div>Notifications</div>} />
+          <Route path="/messages" element={<div>Messages</div>} />
         </Route>
 
         <Route path="/*" element={<Navigate to="/" replace />} />

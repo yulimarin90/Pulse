@@ -12,7 +12,7 @@ export default function ComposeTweet() {
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     api.addTweet(currentUser.id, text);
-    navigate('/');
+    navigate('/feed');
   };
 
   return (
