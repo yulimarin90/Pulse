@@ -4,7 +4,18 @@ export interface User {
     fullName: string,
     username: string,
     email: string,
+    bio?: string,
+    location?: string,
+    website?: string,
+    // yyyy-mm-dd
+    birthDate?: string,
+    // Photos are stored as small data URLs
+    avatarUrl?: string,
+    bannerUrl?: string,
 }
+
+// What the "Edit profile" screen can change. The username and the email cannot be changed.
+export type ProfileChanges = Partial<Pick<User, 'fullName' | 'bio' | 'location' | 'website' | 'birthDate' | 'avatarUrl' | 'bannerUrl'>>;
 
 export interface Tweet {
     id: number,

@@ -1,3 +1,4 @@
+
 import { Navigate, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../blog/AuthContext';
 import Header from '../ui/components/Header';
@@ -8,14 +9,14 @@ export default function PrivateLayout() {
 
   return (
     <>
-      <Header /> 
+      <Header />
       <main className="container">
         <Outlet />
       </main>
 
-      {/* bottom bar visible in Home, Feed, Post.) */}
+      {/* bottom bar visible in Home, Feed, Post. */}
       <nav className="bottom-icon-bar">
-        <Link to="/Home" className="nav-icon-btn" title="Home">
+        <Link to="/home" className="nav-icon-btn" title="Home">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
         </Link>
         <Link to="/search" className="nav-icon-btn" title="Search">

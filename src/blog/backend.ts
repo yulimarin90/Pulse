@@ -1,18 +1,22 @@
-
+// Sign in, register and save the data with Firebase Authentication + Firestore.
+// The screens do not know about Firebase: they only use AuthContext and dataStore.
 import * as api from './dataStore';
-import { firebaseAuthService, getAuthErrorMessage, isWrongCredentialError } from '../blog/firebase';
-import type { AuthService, SocialProvider } from '../blog/firebase';
+import { firebaseAuthService, getAuthErrorMessage, isWrongCredentialError } from './firebase';
+import type { AuthService, SocialProvider } from './firebase';
 import { UsernameTakenError, firestoreStore } from './remoteStore';
 import type { RemoteStore } from './remoteStore';
-import type { RegisterData, User } from './types';
+import type { ProfileChanges, RegisterData, User } from './types';
 
 export interface AuthBackend {
+  // The signed-in user when the page is opened again, or null.
   restoreSession(): Promise<User | null>;
-  // When the username or password is incorrect, it sets it to null
+  // Null when the username or the password are wrong.
   login(username: string, password: string): Promise<User | null>;
   loginWithProvider(provider: SocialProvider): Promise<User>;
-  // If the username or email address is already in use, reject the request with a message.
+  // Rejects with a readable message when the username or the email are already used.
   register(data: RegisterData): Promise<User>;
+  // Saves the profile details of the signed-in user and returns the updated user.
+  updateProfile(userId: number, changes: ProfileChanges): Promise<User>;
   logout(): Promise<void>;
 }
 
@@ -26,7 +30,7 @@ const MAX_USERNAME_ATTEMPTS = 50;
 export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): AuthBackend {
   let stopSync: (() => void) | null = null;
 
-  // Follows and tweets made while signed in are saved in Firestore
+  // Follows and tweets made while signed in are saved in Firestore.
   const startSync = () => {
     stopSync?.();
     stopSync = api.subscribe((event) => {
@@ -35,7 +39,7 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
     });
   };
 
-  // Loads everything from Firestore into the app and returns the user as the app knows it
+  // Loads everything from Firestore into the app and returns the user as the app knows it.
   const openSession = async (profile: User): Promise<User> => {
     api.loadRemoteData(await store.loadAll());
     startSync();
@@ -110,11 +114,17 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       try {
         await store.createProfile(profile, uid);
       } catch (error) {
-        // Someone has taken the username; delete the account so that the email address becomes available again
+        // Someone took the username in the meantime: undo the account so the email is free again.
         await auth.deleteCurrentUser().catch(() => undefined);
         throw error;
       }
       return openSession(profile);
+    },
+
+    async updateProfile(userId, changes) {
+      api.validateProfileChanges(changes);
+      await store.updateProfile(userId, changes);
+      return api.updateUser(userId, changes);
     },
 
     async logout() {

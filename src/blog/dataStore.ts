@@ -1,7 +1,13 @@
-
-import type { Tweet, TweetWithAuthor, User } from './types';
+// Local copy of the data stored in Firestore: users, follows and tweets.
+// The screens read from here, so they are fast and never wait for the network.
+// backend.ts fills it when a person signs in and saves in Firestore the changes made here (see subscribe).
+import type { ProfileChanges, Tweet, TweetWithAuthor, User } from './types';
 
 export const MAX_TWEET_LENGTH = 280;
+export const MAX_NAME_LENGTH = 50;
+export const MAX_BIO_LENGTH = 160;
+export const MAX_LOCATION_LENGTH = 30;
+export const MAX_WEBSITE_LENGTH = 100;
 
 const users: User[] = [];
 // [followerId, followedId]
@@ -13,13 +19,15 @@ export const normalizeEmail = (value: string): string => value.trim().toLowerCas
 export const USERNAME_PATTERN = /^[a-z0-9_]{1,30}$/;
 export const USERNAME_FORMAT_MESSAGE = 'The username can only have letters, numbers and underscores (up to 30)';
 
+// Unique id for new users and tweets. It is based on the time (plus a random part), so two browsers
+// practically never create the same one, and it always grows inside one browser.
 let lastId = 0;
 export const newId = (): number => {
   lastId = Math.max(Date.now() * 1000 + Math.floor(Math.random() * 1000), lastId + 1);
   return lastId;
 };
 
-
+// Changes that must also be saved outside of this file (backend.ts saves them in Firestore).
 export type StoreEvent =
   | { type: 'follow'; followerId: number; followedId: number }
   | { type: 'tweet'; tweet: Tweet };
@@ -50,6 +58,36 @@ const byNewest = (a: Tweet, b: Tweet) => b.createdAt - a.createdAt;
 
 export const getUserById = (id: number): User | undefined => users.find((u) => u.id === id);
 export const getUserByUsername = (username: string): User | undefined => users.find((u) => u.username === username);
+
+// Throws a readable message when a profile change is not valid.
+export function validateProfileChanges(changes: ProfileChanges): void {
+  if (changes.fullName !== undefined) {
+    if (!changes.fullName.trim()) throw new Error('The name cannot be empty');
+    if (changes.fullName.length > MAX_NAME_LENGTH) throw new Error(`The name can have up to ${MAX_NAME_LENGTH} characters`);
+  }
+  if ((changes.bio ?? '').length > MAX_BIO_LENGTH) throw new Error(`The bio can have up to ${MAX_BIO_LENGTH} characters`);
+  if ((changes.location ?? '').length > MAX_LOCATION_LENGTH) throw new Error(`The location can have up to ${MAX_LOCATION_LENGTH} characters`);
+  if ((changes.website ?? '').length > MAX_WEBSITE_LENGTH) throw new Error(`The website can have up to ${MAX_WEBSITE_LENGTH} characters`);
+  if (changes.birthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(changes.birthDate) || changes.birthDate > new Date().toISOString().slice(0, 10))) {
+    throw new Error('Enter a valid birth date');
+  }
+}
+
+// Applies the changes to the local copy of the user and returns it. backend.ts saves them in Firestore first.
+export function updateUser(userId: number, changes: ProfileChanges): User {
+  validateProfileChanges(changes);
+  const index = users.findIndex((u) => u.id === userId);
+  if (index === -1) throw new Error(`User ${userId} not found`);
+  users[index] = { ...users[index], ...changes, ...(changes.fullName !== undefined ? { fullName: changes.fullName.trim() } : {}) };
+  return users[index];
+}
+
+// The ids are created from the clock (see newId), so the registration date is inside the id.
+// Returns null for an id that does not look like a date.
+export function getJoinedAt(user: User): number | null {
+  const joinedAt = Math.floor(user.id / 1000);
+  return joinedAt > Date.UTC(2020, 0, 1) && joinedAt <= Date.now() + 86_400_000 ? joinedAt : null;
+}
 
 function requireUser(id: number): User {
   const user = getUserById(id);
@@ -99,7 +137,7 @@ export function addTweet(userId: number, text: string): void {
   emit({ type: 'tweet', tweet });
 }
 
-// Follows a user typed by username. Throws when the user does not exist, is yourself or is already followed
+// Follows a user typed by username. Throws when the user does not exist, is yourself or is already followed.
 export function followByUsername(followerId: number, username: string): User {
   const normalizedUsername = normalizeUsername(username);
   if (!normalizedUsername) throw new Error('Enter a username');

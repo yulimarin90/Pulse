@@ -4,14 +4,16 @@ import { backend as firebaseBackend } from './backend';
 import type { AuthBackend } from './backend';
 import { isFirebaseConfigured } from './firebase';
 import type { SocialProvider } from './firebase';
-import type { RegisterData, User } from './types';
+import type { ProfileChanges, RegisterData, User } from './types';
 
 interface AuthContextValue {
   currentUser: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   loginWithProvider: (provider: SocialProvider) => Promise<void>;
-  // if the username or email address is already in use, reject the request
+  // Rejects with a readable message when the username or the email are already used.
   register: (data: RegisterData) => Promise<void>;
+  // Saves the changes of the Edit profile screen. Rejects with a readable message.
+  updateProfile: (changes: ProfileChanges) => Promise<void>;
   logout: () => void;
 }
 
@@ -19,7 +21,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
   children: ReactNode;
-  // Only tests pass another one. The app always uses Firebase
+  // Only tests pass another one. The app always uses Firebase.
   backend?: AuthBackend;
 }
 
@@ -28,7 +30,7 @@ export function AuthProvider({ children, backend = firebaseBackend }: AuthProvid
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [ready, setReady] = useState(!configured);
 
-  // Restores the Firebase session before showing the app
+  // Restores the Firebase session (if there is one) before showing the app.
   useEffect(() => {
     if (!configured) return;
     backend.restoreSession()
@@ -46,6 +48,10 @@ export function AuthProvider({ children, backend = firebaseBackend }: AuthProvid
     },
     loginWithProvider: async (provider) => setCurrentUser(await backend.loginWithProvider(provider)),
     register: async (data) => setCurrentUser(await backend.register(data)),
+    updateProfile: async (changes) => {
+      if (!currentUser) throw new Error('No logged-in user');
+      setCurrentUser(await backend.updateProfile(currentUser.id, changes));
+    },
     logout: () => {
       void backend.logout();
       setCurrentUser(null);
@@ -71,7 +77,7 @@ export function useAuth(): AuthContextValue {
   return context;
 }
 
-// 'privateLayout' This is for private pages and ensures that the user is logged in
+// 'privateLayout' This is for private pages and ensures that the user is logged in.
 export function useCurrentUser(): User {
   const { currentUser } = useAuth();
   if (!currentUser) throw new Error('No logged-in user');

@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-// Firebase app and Firebase Authentication. The SDK is loaded only when Firebase is configured and used
+// Firebase app and Firebase Authentication. The SDK is loaded only when Firebase is configured and used.
 import type { FirebaseApp } from 'firebase/app';
 
 export type SocialProvider = 'Google' | 'GitHub' | 'Facebook' | 'Microsoft';
@@ -13,6 +13,7 @@ const config = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// The app only works when the four keys are in the .env file.
 export const isFirebaseConfigured = Object.values(config).every(Boolean);
 
 export async function getFirebaseApp(): Promise<FirebaseApp> {
@@ -32,6 +33,7 @@ export interface SocialAccount {
   displayName: string;
 }
 
+// What the app needs from Firebase Authentication. Tests replace it with a fake one.
 export interface AuthService {
   waitForSession(): Promise<AuthSession | null>;
   signUp(email: string, password: string): Promise<{ uid: string }>;

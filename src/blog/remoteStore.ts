@@ -1,6 +1,10 @@
-
+// Firestore access. Collections:
+//   users/{id}               profile of every user (plus the Firebase uid of its owner)
+//   usernames/{username}     lets a person sign in by username and keeps usernames unique
+//   follows/{followerId}_{followedId}
+//   tweets/{id}
 import type { DataSnapshot } from './dataStore';
-import type { Tweet, User } from './types';
+import type { ProfileChanges, Tweet, User } from './types';
 import { getFirebaseApp } from './firebase';
 
 export class UsernameTakenError extends Error {
@@ -10,12 +14,14 @@ export class UsernameTakenError extends Error {
   }
 }
 
+// What the app needs from the database. Tests replace it with a fake one.
 export interface RemoteStore {
   getEmailByUsername(username: string): Promise<string | null>;
-  // Saves the profile and reserves the username in one step. Throws UsernameTakenError when it is taken
+  // Saves the profile and reserves the username in one step. Throws UsernameTakenError when it is taken.
   createProfile(profile: User, uid: string): Promise<void>;
   findProfileByUid(uid: string): Promise<User | null>;
   loadAll(): Promise<DataSnapshot>;
+  updateProfile(userId: number, changes: ProfileChanges): Promise<void>;
   saveFollow(followerId: number, followedId: number): Promise<void>;
   saveTweet(tweet: Tweet): Promise<void>;
 }
@@ -25,12 +31,14 @@ async function getDb() {
   return { f: firestore, db: firestore.getFirestore(await getFirebaseApp()) };
 }
 
-const toUser = (data: { id: number; fullName: string; username: string; email: string }): User => ({
-  id: data.id,
-  fullName: data.fullName,
-  username: data.username,
-  email: data.email,
-});
+const PROFILE_FIELDS = ['bio', 'location', 'website', 'birthDate', 'avatarUrl', 'bannerUrl'] as const;
+
+const toUser = (data: User): User => {
+  const user: User = { id: data.id, fullName: data.fullName, username: data.username, email: data.email };
+  // Only the details that were filled in.
+  for (const field of PROFILE_FIELDS) if (data[field]) user[field] = data[field];
+  return user;
+};
 
 export const firestoreStore: RemoteStore = {
   async getEmailByUsername(username) {
@@ -68,6 +76,13 @@ export const firestoreStore: RemoteStore = {
         return { id, userId, text, createdAt };
       }),
     };
+  },
+
+  async updateProfile(userId, changes) {
+    const { f, db } = await getDb();
+    // Firestore does not accept undefined values.
+    const data = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined));
+    await f.updateDoc(f.doc(db, 'users', String(userId)), data);
   },
 
   async saveFollow(followerId, followedId) {
