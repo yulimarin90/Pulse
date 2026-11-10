@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useReducer } from 'react';
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
 import FollowByUsername from '../ui/components/FollowByUsername';
@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <section className="home-page">
-      <FollowByUsername onFollowed={refresh} />
+   
 
       <div className="feed-tabs">
         {tabs.map((tab) => (

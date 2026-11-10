@@ -7,7 +7,7 @@ import ProviderButton from '../ui/components/ProviderButton';
 import type { Provider } from '../ui/components/ProviderButton';
 import Xlogo from '../ui/components/Xlogo';
 
-const PROVIDERS: Provider[] = ['Google', 'GitHub', 'Facebook', 'Microsoft'];
+const PROVIDERS: Provider[] = ['Google', 'GitHub', 'Facebook'];
 
 export default function Login() {
   const { currentUser, login, loginWithProvider } = useAuth();
