@@ -34,7 +34,10 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
   const startSync = () => {
     stopSync?.();
     stopSync = api.subscribe((event) => {
-      const saving = event.type === 'follow' ? store.saveFollow(event.followerId, event.followedId) : store.saveTweet(event.tweet);
+      let saving: Promise<void>;
+      if (event.type === 'tweet') saving = store.saveTweet(event.tweet);
+      else if (event.type === 'follow') saving = store.saveFollow(event.followerId, event.followedId);
+      else saving = store.deleteFollow(event.followerId, event.followedId);
       saving.catch((error) => console.error('Could not save the change in Firebase', error));
     });
   };

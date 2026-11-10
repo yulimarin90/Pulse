@@ -39,6 +39,18 @@ export function AuthProvider({ children, backend = firebaseBackend }: AuthProvid
       .finally(() => setReady(true));
   }, [backend, configured]);
 
+    // ***When the internet connection is lost, the session is closed and the person has to sign in again.
+  // const signedIn = currentUser !== null;
+  // useEffect(() => {
+  //   if (!signedIn) return;
+  //   const closeSession = () => {
+  //     void backend.logout();
+  //     setCurrentUser(null);
+  //   };
+  //   window.addEventListener('offline', closeSession);
+  //   return () => window.removeEventListener('offline', closeSession);
+  // }, [backend, signedIn]);
+
   const value = useMemo<AuthContextValue>(() => ({
     currentUser,
     login: async (username, password) => {

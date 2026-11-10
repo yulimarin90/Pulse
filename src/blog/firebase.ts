@@ -43,10 +43,32 @@ export interface AuthService {
   signOut(): Promise<void>;
 }
 
+//con esto cuando recarga la pagina no se pierde la sesion de firebase, ya que firebase guarda la sesion en el localstorage del navegador
 async function loadAuth() {
   const authModule = await import('firebase/auth');
   return { authModule, auth: authModule.getAuth(await getFirebaseApp()) };
 }
+
+// The session lives only in memory: when the page is reloaded, closed or the project is run again, the
+// person has to sign in again. (To keep the session while the tab is open, use browserSessionPersistence.)
+// async function createAuth() {
+//   const authModule = await import('firebase/auth');
+//   const app = await getFirebaseApp();
+//   let auth;
+//   try {
+//     auth = authModule.initializeAuth(app, {
+//       persistence: authModule.inMemoryPersistence,
+//       popupRedirectResolver: authModule.browserPopupRedirectResolver,
+//     });
+//   } catch {
+//     // Already created (hot reload while developing).
+//     auth = authModule.getAuth(app);
+//   }
+//   return { authModule, auth };
+// }
+
+// let authPromise: ReturnType<typeof createAuth> | null = null;
+// const loadAuth = () => (authPromise ??= createAuth());
 
 export const firebaseAuthService: AuthService = {
   async waitForSession() {

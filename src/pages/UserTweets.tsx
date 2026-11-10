@@ -59,7 +59,7 @@ export default function UserTweets() {
       {view === 'tweets' && tab === 'posts' && <TweetList tweets={api.getTweetsByUser(user.id)} />}
       {view === 'tweets' && tab !== 'posts' && <p className="empty-tab muted">{EMPTY_TAB_MESSAGES[tab]}</p>}
       {view === 'followers' && <UserList users={api.getFollowers(user.id)} showFollow onFollow={refresh} />}
-      {view === 'following' && <UserList users={api.getFollowing(user.id)} onFollow={refresh} />}
+      {view === 'following' && <UserList users={api.getFollowing(user.id)} showFollow onFollow={refresh} onUnfollow={refresh} />}
     </section>
   );
 }

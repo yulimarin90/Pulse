@@ -23,6 +23,7 @@ export interface RemoteStore {
   loadAll(): Promise<DataSnapshot>;
   updateProfile(userId: number, changes: ProfileChanges): Promise<void>;
   saveFollow(followerId: number, followedId: number): Promise<void>;
+  deleteFollow(followerId: number, followedId: number): Promise<void>;
   saveTweet(tweet: Tweet): Promise<void>;
 }
 
@@ -37,7 +38,7 @@ const toUser = (data: User): User => {
   const user: User = { id: data.id, fullName: data.fullName, username: data.username, email: data.email };
   // Only the details that were filled in.
   for (const field of PROFILE_FIELDS) if (data[field]) user[field] = data[field];
-    if (data.verified === true) user.verified = true;
+  if (data.verified === true) user.verified = true;
   return user;
 };
 
@@ -89,6 +90,11 @@ export const firestoreStore: RemoteStore = {
   async saveFollow(followerId, followedId) {
     const { f, db } = await getDb();
     await f.setDoc(f.doc(db, 'follows', `${followerId}_${followedId}`), { followerId, followedId });
+  },
+
+  async deleteFollow(followerId, followedId) {
+    const { f, db } = await getDb();
+    await f.deleteDoc(f.doc(db, 'follows', `${followerId}_${followedId}`));
   },
 
   async saveTweet(tweet) {

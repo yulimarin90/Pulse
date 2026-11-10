@@ -3,12 +3,12 @@ import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
 import TweetList from '../ui/components/TweetList';
 
-type Tab = 'forYou' | 'following' | 'followers';
+type Tab = 'forYou' | 'following'; //'followers';
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'forYou', label: 'For You' },
   { id: 'following', label: 'Following' },
-  { id: 'followers', label: 'Followers' },
+  //{ id: 'followers', label: 'Followers' },
 ];
 
 export default function Feed() {
@@ -19,7 +19,7 @@ export default function Feed() {
   const tweetsByTab = {
     forYou: () => api.getFeed(currentUser.id),
     following: () => api.getFollowingTweets(currentUser.id),
-    followers: () => api.getFollowersTweets(currentUser.id),
+    //followers: () => api.getFollowersTweets(currentUser.id),
   };
 
   return (

@@ -2,7 +2,6 @@
 import { useReducer, useState } from 'react';
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
-import FollowByUsername from '../ui/components/FollowByUsername';
 import UserList from '../ui/components/UserList';
 
 type Tab = 'foryou' | 'following';

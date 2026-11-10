@@ -30,6 +30,7 @@ export const newId = (): number => {
 // Changes that must also be saved outside of this file (backend.ts saves them in Firestore).
 export type StoreEvent =
   | { type: 'follow'; followerId: number; followedId: number }
+  | { type: 'unfollow'; followerId: number; followedId: number }
   | { type: 'tweet'; tweet: Tweet };
 
 const listeners = new Set<(event: StoreEvent) => void>();
@@ -113,22 +114,31 @@ export const getFollowers = (userId: number): User[] => follows
 export const isFollowing = (followerId: number, followedId: number): boolean => follows
   .some(([f, t]) => f === followerId && t === followedId);
 
-   // It doesn't matter if the names contain capital letters or accent marks; it searches for them all the same
-   const plain = (value: string): string => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+// People the user can still follow (not themselves, not followed yet) whose name or username contains the text.
+// Lowercase and without accents, so "Medellín" and "medellin" are the same when searching.
+const plain = (value: string): string => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-   export function getUsersToFollow(userId: number, query = ''): User[] {
-     const text = plain(query.trim()).replace(/^@/, '');
-     return users
-       .filter((u) => u.id !== userId && !isFollowing(userId, u.id))
-       .filter((u) => !text || plain(u.fullName).includes(text) || u.username.includes(text))
-       .sort(byFullName);
-   }
+export function getUsersToFollow(userId: number, query = ''): User[] {
+  const text = plain(query.trim()).replace(/^@/, '');
+  return users
+    .filter((u) => u.id !== userId && !isFollowing(userId, u.id))
+    .filter((u) => !text || plain(u.fullName).includes(text) || u.username.includes(text))
+    .sort(byFullName);
+}
 
 export function follow(followerId: number, followedId: number): void {
   if (followerId === followedId) return;
   if (isFollowing(followerId, followedId)) return;
   follows.push([followerId, followedId]);
   emit({ type: 'follow', followerId, followedId });
+}
+
+// Stops following a user. Does nothing when the user was not followed.
+export function unfollow(followerId: number, followedId: number): void {
+  const index = follows.findIndex(([follower, followed]) => follower === followerId && followed === followedId);
+  if (index === -1) return;
+  follows.splice(index, 1);
+  emit({ type: 'unfollow', followerId, followedId });
 }
 
 export const getTweetsByUser = (userId: number): TweetWithAuthor[] => tweets
