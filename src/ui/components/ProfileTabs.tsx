@@ -8,7 +8,9 @@ interface ProfileTabsProps {
   onSelect: (tab: ProfileTab) => void;
 }
 
-const svgProps = { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+const svgProps = { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', 
+    stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', 
+    strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
 const TABS: Array<{ id: ProfileTab; label: string; icon: ReactNode }> = [
   {
@@ -71,7 +73,8 @@ export default function ProfileTabs({ active, onSelect }: ProfileTabsProps) {
           {tab.id === 'posts' && (
             <>
               <span className="tab-label">Posts</span>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" 
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </>

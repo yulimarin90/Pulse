@@ -3,6 +3,7 @@ import usePagination   from '../../blog/usePagination';
 import type { TweetWithAuthor } from "../../blog/types";
 import Avatar from './Avatar';
 import Pagination   from "./Pagination";
+import VerifiedBadge from './VerifiedBadge';
 
 const formatDateTime = (timestamp: number): string => new Date(timestamp)
     .toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
@@ -19,7 +20,7 @@ export default function TweetList({ tweets }: { tweets: TweetWithAuthor[] }) {
                     <div className="tweet-body">
                         <p className="tweet-header">
                             <Link to={`/users/${tweet.author.username}`} className="tweet-author">
-                                <strong>{tweet.author.fullName}</strong><span className="muted">@{tweet.author.username}</span>
+                                <strong>{tweet.author.fullName}</strong>{tweet.author.verified && <VerifiedBadge size={16} />},<span className="muted">@{tweet.author.username}</span>
                             </Link>
                             {' - '}
                             <time className="muted" dateTime={new Date(tweet.createdAt).toISOString()}>{formatDateTime(tweet.createdAt)}</time>

@@ -182,3 +182,10 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
 .edit-row input::placeholder, .edit-row textarea::placeholder { color: var(--muted); }
 .edit-row input[type='date'] { color-scheme: dark; }
 .edit-profile .notice { margin: 16px; }
+.verified-badge { display: inline-block; flex: none; margin-left: 4px; vertical-align: -3px; }
+
+/* search */
+.search-box { padding: 12px 16px; }
+.search-box input { width: 100%; }
+.section-title { margin: 0; padding: 12px 16px; font-size: 20px; font-weight: 800; border-top: 1px solid var(--border); }
+.empty-tab { padding: 32px 16px; text-align: center; }

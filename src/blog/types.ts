@@ -11,7 +11,8 @@ export interface User {
     birthDate?: string,
     // Photos are stored as small data URLs
     avatarUrl?: string,
-    bannerUrl?: string,
+    bannerUrl?: string, 
+    verified?: boolean,
 }
 
 // What the "Edit profile" screen can change. The username and the email cannot be changed.

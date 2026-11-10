@@ -4,6 +4,7 @@ import { getJoinedAt } from '../../blog/dataStore';
 import type { User } from '../../blog/types';
 import Avatar from './Avatar';
 import ShareProfileButton from './ShareProfileButton';
+import VerifiedBadge from './VerifiedBadge';
 
 interface ProfileHeaderProps {
   user: User;
@@ -29,9 +30,9 @@ export default function ProfileHeader({ user, isOwn, children, action }: Profile
       </div>
 
       <div className="profile-details">
-        <h1 className="profile-name">{user.fullName}</h1>
-        <p className="muted">@{user.username}</p>
-        {user.bio && <p className="profile-bio">{user.bio}</p>}
+          <h1 className="profile-name">{user.fullName}{user.verified && <VerifiedBadge />}</h1>
+            <p className="muted">@{user.username}</p>
+          {user.bio && <p className="profile-bio">{user.bio}</p>}
         <p className="profile-meta muted">
           {user.location && <span>{user.location}</span>}
           {user.website && <span className="accent">{user.website}</span>}

@@ -1,0 +1,63 @@
+rules_version = '2';
+
+// Paste these rules in Firebase console > Firestore Database > Rules, then press Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // True when the profile users/{userId} belongs to the person who is signed in.
+    function ownsProfile(userId) {
+      return get(/databases/$(database)/documents/users/$(string(userId))).data.uid == request.auth.uid;
+    }
+
+    // Profiles: everybody signed in can read them, each person creates and edits only their own.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      // Only the profile details can change (not the id, username, email or owner).
+      allow update: if signedIn() && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.id == resource.data.id
+                    && request.resource.data.username == resource.data.username
+                    && request.resource.data.email == resource.data.email
+                    && request.resource.data.fullName.size() > 0
+                    && request.resource.data.fullName.size() <= 50
+                    && request.resource.data.get('bio', '').size() <= 160
+                    && request.resource.data.get('location', '').size() <= 30
+                    && request.resource.data.get('website', '').size() <= 100
+                    && request.resource.data.get('avatarUrl', '').size() <= 150000
+                    && request.resource.data.get('bannerUrl', '').size() <= 300000;
+                    && request.resource.data.get('bannerUrl', '').size() <= 300000
+                    && request.resource.data.get('verified', false) == resource.data.get('verified', false);
+      allow delete: if false;
+    }
+
+    // Username -> email, so a person can sign in by username before being signed in.
+    // It can be read one by one (get) but not listed. A username can only be created once.
+    match /usernames/{username} {
+      allow get: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // A person can only create follows where they are the follower.
+    match /follows/{followId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && ownsProfile(request.resource.data.followerId);
+      allow update: if false;
+      allow delete: if signedIn() && ownsProfile(resource.data.followerId);
+    }
+
+    // A person can only post tweets as themselves, up to 280 characters.
+    match /tweets/{tweetId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && ownsProfile(request.resource.data.userId)
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 280;
+      allow update, delete: if false;
+    }
+  }
+}

@@ -113,6 +113,17 @@ export const getFollowers = (userId: number): User[] => follows
 export const isFollowing = (followerId: number, followedId: number): boolean => follows
   .some(([f, t]) => f === followerId && t === followedId);
 
+   // It doesn't matter if the names contain capital letters or accent marks; it searches for them all the same
+   const plain = (value: string): string => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+   export function getUsersToFollow(userId: number, query = ''): User[] {
+     const text = plain(query.trim()).replace(/^@/, '');
+     return users
+       .filter((u) => u.id !== userId && !isFollowing(userId, u.id))
+       .filter((u) => !text || plain(u.fullName).includes(text) || u.username.includes(text))
+       .sort(byFullName);
+   }
+
 export function follow(followerId: number, followedId: number): void {
   if (followerId === followedId) return;
   if (isFollowing(followerId, followedId)) return;

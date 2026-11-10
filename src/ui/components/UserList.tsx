@@ -4,6 +4,7 @@ import type { User } from '../../blog/types';
 import Pagination from './Pagination';
 import FollowButton from './FollowButton';
 import Avatar from './Avatar';
+import VerifiedBadge from './VerifiedBadge';
 
 interface UserListProps {
   users: User[];
@@ -22,7 +23,7 @@ export default function UserList({ users, showFollow = false, onFollow }: UserLi
             <Link to={`/users/${user.username}`} className="user-link">
               <Avatar name={user.fullName} />
               <span className="user-names">
-                <strong>{user.fullName}</strong>
+                <strong>{user.fullName}{user.verified && <VerifiedBadge size={16} />}</strong>
                 <span className="muted">@{user.username}</span>
               </span>
             </Link>

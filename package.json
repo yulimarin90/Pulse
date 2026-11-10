@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed": "node scripts/seed-test-data.mjs"
   },
   "dependencies": {
     "firebase": "^13.2.0",
+    "firebase-admin": "^14.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^6.30.6"

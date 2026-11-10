@@ -37,6 +37,7 @@ const toUser = (data: User): User => {
   const user: User = { id: data.id, fullName: data.fullName, username: data.username, email: data.email };
   // Only the details that were filled in.
   for (const field of PROFILE_FIELDS) if (data[field]) user[field] = data[field];
+    if (data.verified === true) user.verified = true;
   return user;
 };
 
