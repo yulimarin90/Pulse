@@ -6,7 +6,7 @@ const FIRST_NAMES = [
 ];
 const LAST_NAMES = ['Gomez', 'Diaz', 'Mejia', 'Rios', 'Vargas'];
 
-// 100 users: Sebastian (1), Yuli (2) and 98 generated (20 first names x 5 last names, all unique).
+
 const users: User[] = [
   { id: 1, fullName: 'Sebastian Cardona', username: 'sebastianc', email: 'sebastian.cardona@example.com' },
   { id: 2, fullName: 'Yuli Marin', username: 'yulim', email: 'yuli.marin@example.com' },
@@ -28,7 +28,7 @@ for (const me of [1, 2]) {
   for (let id = 3; id <= 45; id += 1) follows.push([me, id]); // follows 43 users
   for (let id = 30; id <= 80; id += 1) follows.push([id, me]); // 51 followers
 }
-follows.push([1, 2], [2, 1]); // Sebastian and Yuli follow each other
+follows.push([1, 2], [2, 1]); // 
 
 // 100 tweets spread across users 1 to 8.
 const tweets: Tweet[] = Array.from({ length: 100 }, (_, i) => ({

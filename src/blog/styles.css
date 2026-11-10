@@ -16,7 +16,7 @@ p { margin: 0; }
 .accent { color: var(--blue); }
 .error { color: #f4212e; }
 
-/* Layout: one centered column with side borders, like X */
+/* Layout: one centered column with side borders */
 .container, .header { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 .container { min-height: 100vh; padding-bottom: 70px; } /* room for the bottom icon bar */
 .row { display: flex; align-items: center; justify-content: space-between; padding-right: 16px; }

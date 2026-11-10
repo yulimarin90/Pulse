@@ -34,7 +34,7 @@ export default function Login() {
         <button type="submit" className="btn">Enter</button>
       </form>
       <div className="divider"><span>o</span></div>
-      <p className="jf-element">Selecciona una opción a continuación:</p>
+      <p className="jf-element">Select an option below:</p>
       {PROVIDERS.map((provider) => (
         <ProviderButton key={provider} provider={provider} onClick={() => setProviderMessage('Disabled Button')} />
       ))}
