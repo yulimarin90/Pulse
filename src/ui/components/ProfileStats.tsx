@@ -16,7 +16,7 @@ export default function ProfileStats({ userId, linked = false, active, onSelect 
 
   const stat = (view: 'followers' | 'following', to: string, count: number, text: string) => {
     const content = <><strong>{count}</strong> {text}</>;
-    // With onSelect the counters are buttons that switch the view of the page.
+    // With onSelect the counters are buttons that switch the view of the page
     if (onSelect) {
       return (
         <button type="button" className={`stat-btn ${active === view ? 'active' : ''}`} onClick={() => onSelect(view)}>

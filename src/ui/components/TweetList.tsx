@@ -4,6 +4,9 @@ import type { TweetWithAuthor } from "../../blog/types";
 import Avatar from './Avatar';
 import Pagination   from "./Pagination";
 
+const formatDateTime = (timestamp: number): string => new Date(timestamp)
+    .toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+
 export default function TweetList({ tweets }: { tweets: TweetWithAuthor[] }) {
     const { pageItems, page, totalPages, setPage } = usePagination(tweets);
 
@@ -14,9 +17,13 @@ export default function TweetList({ tweets }: { tweets: TweetWithAuthor[] }) {
                 <li key={tweet.id} className="list-item">
                     <Avatar name={tweet.author.fullName} />
                     <div className="tweet-body">
-                        <Link to={`/users/${tweet.author.username}`} className="tweet-author">
-                            <strong>{tweet.author.fullName}</strong><span className="muted">@{tweet.author.username}</span>
-                        </Link>
+                        <p className="tweet-header">
+                            <Link to={`/users/${tweet.author.username}`} className="tweet-author">
+                                <strong>{tweet.author.fullName}</strong><span className="muted">@{tweet.author.username}</span>
+                            </Link>
+                            {' - '}
+                            <time className="muted" dateTime={new Date(tweet.createdAt).toISOString()}>{formatDateTime(tweet.createdAt)}</time>
+                        </p>
                         <p>{tweet.text}</p>
                     </div>
                 </li>

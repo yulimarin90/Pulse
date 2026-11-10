@@ -11,7 +11,7 @@ export default function FollowButton({ targetId, onFollow }: FollowButtonProps) 
   const currentUser = useCurrentUser();
   const [following, setFollowing] = useState(api.isFollowing(currentUser.id, targetId));
 
-  if (following) return null;
+  if (following || targetId === currentUser.id) return null;
   return (
     <button
       type="button"

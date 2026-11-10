@@ -15,7 +15,7 @@ export default function UserTweets() {
   const [view, setView] = useState<StatsView>('tweets');
   const user = api.getUserByUsername(username);
 
-  // Back to the tweets when another profile is opened.
+  // Back to the tweets when another profile is opened
   useEffect(() => {
     setView('tweets');
   }, [username]);
