@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCurrentUser } from '../blog/AuthContext';
-import * as api from '../blog/mockApi';
+import * as api from '../blog/dataStore';
 import TweetList from '../ui/components/TweetList';
 
 export default function Feed() {

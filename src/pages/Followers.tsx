@@ -1,6 +1,6 @@
 
 import { useCurrentUser } from '../blog/AuthContext';
-import * as api from '../blog/mockApi';
+import * as api from '../blog/dataStore';
 import UserList from '../ui/components/UserList';
 import ProfileStats from '../ui/components/ProfileStats';
 

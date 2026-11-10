@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
-import * as api from '../blog/mockApi';
+import * as api from '../blog/dataStore';
 
 export default function ComposeTweet() {
   const currentUser = useCurrentUser();

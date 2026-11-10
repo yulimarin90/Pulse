@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
-import * as api from '../blog/mockApi';
+import * as api from '../blog/dataStore';
 import FollowButton from '../ui/components/FollowButton';
 import ProfileStats from '../ui/components/ProfileStats';
 import type { StatsView } from '../ui/components/ProfileStats';

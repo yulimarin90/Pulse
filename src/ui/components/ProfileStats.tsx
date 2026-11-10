@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import * as api from '../../blog/mockApi';
+import * as api from '../../blog/dataStore';
 
 export type StatsView = 'tweets' | 'followers' | 'following';
 

@@ -8,6 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
+# Secrets (Firebase keys and the service account used by the seed script)
+.env
+serviceAccountKey*.json
 dist
 dist-ssr
 *.local
