@@ -24,7 +24,7 @@ export default function BaseRouter() {
           <Route path="/feed" element={<Feed />} />
           <Route path="/users/:username" element={<UserTweets />} />
           
-          {/* Rutas añadidas para los iconos de la barra inferior */}
+        
           <Route path="/search" element={<div>Search for people</div>} />
           <Route path="/notifications" element={<div>Notifications</div>} />
           <Route path="/messages" element={<div>Messages</div>} />

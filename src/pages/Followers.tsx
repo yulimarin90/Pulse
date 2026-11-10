@@ -1,4 +1,3 @@
-
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
 import UserList from '../ui/components/UserList';
