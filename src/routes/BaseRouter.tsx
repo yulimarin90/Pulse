@@ -8,6 +8,8 @@ import Following from '../pages/Following';
 import Followers from '../pages/Followers';
 import UserTweets from '../pages/UserTweets';
 import Feed from '../pages/Feed';
+import Search from '../pages/Search';
+import EditProfile from '../pages/EditProfile';
 
 export default function BaseRouter() {
   return (
@@ -23,9 +25,10 @@ export default function BaseRouter() {
           <Route path="/followers" element={<Followers />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/users/:username" element={<UserTweets />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           
-        
-          <Route path="/search" element={<div>Search for people</div>} />
+          {/* Rutas añadidas para los iconos de la barra inferior */}
+          <Route path="/search" element={<Search />} />
           <Route path="/notifications" element={<div>Notifications</div>} />
           <Route path="/messages" element={<div>Messages</div>} />
         </Route>

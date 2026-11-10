@@ -1,52 +1,43 @@
 import { useState } from 'react';
-import type { SyntheticEvent } from 'react';
-import { Link } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
-import Notice from '../ui/components/Notice';
-import type { NoticeState } from '../ui/components/Notice';
+import TweetList from '../ui/components/TweetList';
 
-export default function ComposeTweet() {
+type Tab = 'forYou' | 'following' | 'followers';
+
+const TABS: Array<{ id: Tab; label: string }> = [
+  { id: 'forYou', label: 'For You' },
+  { id: 'following', label: 'Following' },
+  { id: 'followers', label: 'Followers' },
+];
+
+export default function Feed() {
   const currentUser = useCurrentUser();
-  const [text, setText] = useState('');
-  const [notice, setNotice] = useState<NoticeState | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('forYou');
 
-  const remaining = api.MAX_TWEET_LENGTH - text.length;
-  const tooLong = remaining < 0;
-
-  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      api.addTweet(currentUser.id, text);
-      setText('');
-      setNotice({ type: 'success', message: 'Tweet posted successfully' });
-    } catch (err) {
-      setNotice({ type: 'error', message: err instanceof Error ? err.message : 'Could not post the tweet' });
-    }
+  // For You: your tweets and the ones from people you follow. The other tabs only show one group.
+  const tweetsByTab = {
+    forYou: () => api.getFeed(currentUser.id),
+    following: () => api.getFollowingTweets(currentUser.id),
+    followers: () => api.getFollowersTweets(currentUser.id),
   };
 
   return (
     <section>
-      <h1>Post tweet</h1>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          rows={5}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setNotice(null);
-          }}
-          required
-        />
-        <div className="row compose-footer">
-          <span className={`char-count ${tooLong ? 'over' : ''}`}>{remaining}</span>
-          <button type="submit" className="btn" disabled={tooLong || !text.trim()}>[Post]</button>
-        </div>
-      </form>
-      {notice && <Notice type={notice.type} message={notice.message} />}
-      {notice?.type === 'success' && (
-        <p className="notice-link"><Link to="/feed" className="accent">See it in your feed</Link></p>
-      )}
+      <div className="feed-tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <TweetList key={activeTab} tweets={tweetsByTab[activeTab]()} />
     </section>
   );
 }
