@@ -10,6 +10,8 @@ import UserTweets from '../pages/UserTweets';
 import Feed from '../pages/Feed';
 import Search from '../pages/Search';
 import EditProfile from '../pages/EditProfile';
+import Notifications from '../pages/Notifications';
+import TweetDetail from '../pages/TweetDetail';
 
 export default function BaseRouter() {
   return (
@@ -25,11 +27,12 @@ export default function BaseRouter() {
           <Route path="/followers" element={<Followers />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/users/:username" element={<UserTweets />} />
+          <Route path="/tweets/:tweetId" element={<TweetDetail />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           
           {/* Rutas añadidas para los iconos de la barra inferior */}
           <Route path="/search" element={<Search />} />
-          <Route path="/notifications" element={<div>Notifications</div>} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/messages" element={<div>Messages</div>} />
         </Route>
 

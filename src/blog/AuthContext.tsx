@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { backend as firebaseBackend } from './backend';
@@ -10,10 +11,9 @@ interface AuthContextValue {
   currentUser: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   loginWithProvider: (provider: SocialProvider) => Promise<void>;
-  // Rejects with a readable message when the username or the email are already used.
   register: (data: RegisterData) => Promise<void>;
-  // Saves the changes of the Edit profile screen. Rejects with a readable message.
   updateProfile: (changes: ProfileChanges) => Promise<void>;
+  markNotificationsSeen: () => Promise<void>;
   logout: () => void;
 }
 
@@ -30,7 +30,6 @@ export function AuthProvider({ children, backend = firebaseBackend }: AuthProvid
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [ready, setReady] = useState(!configured);
 
-  // Restores the Firebase session (if there is one) before showing the app.
   useEffect(() => {
     if (!configured) return;
     backend.restoreSession()
@@ -63,6 +62,10 @@ export function AuthProvider({ children, backend = firebaseBackend }: AuthProvid
     updateProfile: async (changes) => {
       if (!currentUser) throw new Error('No logged-in user');
       setCurrentUser(await backend.updateProfile(currentUser.id, changes));
+    },
+    markNotificationsSeen: async () => {
+      if (!currentUser) return;
+      setCurrentUser(await backend.markNotificationsSeen(currentUser.id));
     },
     logout: () => {
       void backend.logout();

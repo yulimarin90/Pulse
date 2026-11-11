@@ -1,7 +1,9 @@
+
 import { useEffect, useReducer, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
+import useDataVersion from '../blog/useDataVersion';
 import FollowButton from '../ui/components/FollowButton';
 import ProfileHeader from '../ui/components/ProfileHeader';
 import ProfileStats from '../ui/components/ProfileStats';
@@ -17,6 +19,13 @@ const EMPTY_TAB_MESSAGES: Record<Exclude<ProfileTab, 'posts'>, string> = {
   reposts: 'No reposts yet',
   media: 'No photos or videos yet',
 };
+
+// Replies written by the user, tweets the user reposted, or tweets with a photo.
+function ProfileTabContent({ tab, userId }: { tab: Exclude<ProfileTab, 'posts'>; userId: number }) {
+  const tweets = tab === 'replies' ? api.getRepliesByUser(userId) : tab === 'reposts' ? api.getRepostedTweets(userId) : api.getMediaTweetsByUser(userId);
+  if (tweets.length === 0) return <p className="empty-tab muted">{EMPTY_TAB_MESSAGES[tab]}</p>;
+  return <TweetList tweets={tweets} />;
+}
 
 export default function UserTweets() {
   const { username = '' } = useParams();
@@ -41,7 +50,7 @@ export default function UserTweets() {
       <ProfileHeader
         user={user}
         isOwn={user.id === currentUser.id}
-        action={canFollow ? <FollowButton targetId={user.id} onFollow={refresh} /> : undefined}
+        action={canFollow ? <FollowButton targetId={user.id} onFollow={refresh} onUnfollow={refresh} /> : undefined}
       >
         <ProfileStats
           userId={user.id}

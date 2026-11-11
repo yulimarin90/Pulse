@@ -29,8 +29,8 @@ service cloud.firestore {
                     && request.resource.data.get('location', '').size() <= 30
                     && request.resource.data.get('website', '').size() <= 100
                     && request.resource.data.get('avatarUrl', '').size() <= 150000
-                    && request.resource.data.get('bannerUrl', '').size() <= 300000;
                     && request.resource.data.get('bannerUrl', '').size() <= 300000
+                    // Nobody can verify themselves: it is changed only from the console.
                     && request.resource.data.get('verified', false) == resource.data.get('verified', false);
       allow delete: if false;
     }
@@ -51,12 +51,31 @@ service cloud.firestore {
       allow delete: if signedIn() && ownsProfile(resource.data.followerId);
     }
 
-    // A person can only post tweets as themselves, up to 280 characters.
+    // A person can only like or repost as themselves, and the document id must be {userId}_{tweetId}.
+    match /likes/{likeId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && ownsProfile(request.resource.data.userId)
+                    && likeId == string(request.resource.data.userId) + '_' + string(request.resource.data.tweetId);
+      allow update: if false;
+      allow delete: if signedIn() && ownsProfile(resource.data.userId);
+    }
+
+    match /reposts/{repostId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && ownsProfile(request.resource.data.userId)
+                    && repostId == string(request.resource.data.userId) + '_' + string(request.resource.data.tweetId);
+      allow update: if false;
+      allow delete: if signedIn() && ownsProfile(resource.data.userId);
+    }
+
+    // A person can only post tweets as themselves: up to 280 characters, with an optional small photo.
+    // A tweet needs text or a photo. A reply is a tweet with the replyToId of the tweet it answers.
     match /tweets/{tweetId} {
       allow read: if signedIn();
       allow create: if signedIn() && ownsProfile(request.resource.data.userId)
-                    && request.resource.data.text.size() > 0
-                    && request.resource.data.text.size() <= 280;
+                    && request.resource.data.text.size() <= 280
+                    && (request.resource.data.text.size() > 0 || request.resource.data.get('imageUrl', '').size() > 0)
+                    && request.resource.data.get('imageUrl', '').size() <= 350000;
       allow update, delete: if false;
     }
   }

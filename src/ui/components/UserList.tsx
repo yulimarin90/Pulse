@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useCurrentUser } from '../../blog/AuthContext';
+import * as api from '../../blog/dataStore';
 import usePagination from '../../blog/usePagination';
 import type { User } from '../../blog/types';
 import Pagination from './Pagination';
@@ -14,6 +16,7 @@ interface UserListProps {
 }
 
 export default function UserList({ users, showFollow = false, onFollow, onUnfollow }: UserListProps) {
+  const currentUser = useCurrentUser();
   const { pageItems, page, totalPages, setPage } = usePagination(users);
 
   return (
@@ -25,7 +28,11 @@ export default function UserList({ users, showFollow = false, onFollow, onUnfoll
               <Avatar name={user.fullName} src={user.avatarUrl} />
               <span className="user-names">
                 <strong>{user.fullName}{user.verified && <VerifiedBadge size={16} />}</strong>
-                <span className="muted">@{user.username}</span>
+                <span className="muted">
+                  @{user.username}
+                  {api.isFollowing(user.id, currentUser.id) && <span className="follows-you">Follows you</span>}
+                </span>
+                {user.bio && <span className="user-bio">{user.bio}</span>}
               </span>
             </Link>
             {showFollow && <FollowButton targetId={user.id} onFollow={onFollow} onUnfollow={onUnfollow} />}

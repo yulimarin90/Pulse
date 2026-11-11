@@ -13,6 +13,7 @@ export interface User {
     avatarUrl?: string,
     bannerUrl?: string, 
     verified?: boolean,
+    notificationsSeenAt?: number,
 }
 
 // What the "Edit profile" screen can change. The username and the email cannot be changed.
@@ -23,8 +24,14 @@ export interface Tweet {
     userId: number,
     text: string,
     createdAt: number,
-    mediaUrl?: string;    
-    mediaType?: 'image' | 'video'; 
+    imageUrl?: string,    
+    replyToId?: number,
+}
+
+export interface Reaction {
+    userId: number,
+    tweetId: number,
+    createdAt: number,
 }
 
 export interface TweetWithAuthor extends Tweet {
@@ -36,4 +43,16 @@ export interface RegisterData {
     username: string,
     email: string,
     password: string,
+}
+
+export type NotificationKind = 'follow' | 'tweet' | 'mention' | 'like' | 'repost' | 'reply';
+
+export interface AppNotification {
+    id: string,
+    kind: NotificationKind,
+    createdAt: number,
+    actor: User,
+    // The tweet, for the kinds 'tweet' and 'mention'.
+    tweet?: TweetWithAuthor,
+    target?: TweetWithAuthor,
 }

@@ -1,5 +1,4 @@
-// Sign in, register and save the data with Firebase Authentication + Firestore.
-// The screens do not know about Firebase: they only use AuthContext and dataStore.
+
 import * as api from './dataStore';
 import { firebaseAuthService, getAuthErrorMessage, isWrongCredentialError } from './firebase';
 import type { AuthService, SocialProvider } from './firebase';
@@ -8,15 +7,12 @@ import type { RemoteStore } from './remoteStore';
 import type { ProfileChanges, RegisterData, User } from './types';
 
 export interface AuthBackend {
-  // The signed-in user when the page is opened again, or null.
   restoreSession(): Promise<User | null>;
-  // Null when the username or the password are wrong.
   login(username: string, password: string): Promise<User | null>;
   loginWithProvider(provider: SocialProvider): Promise<User>;
-  // Rejects with a readable message when the username or the email are already used.
   register(data: RegisterData): Promise<User>;
-  // Saves the profile details of the signed-in user and returns the updated user.
   updateProfile(userId: number, changes: ProfileChanges): Promise<User>;
+  markNotificationsSeen(userId: number): Promise<User>;
   logout(): Promise<void>;
 }
 
@@ -30,16 +26,28 @@ const MAX_USERNAME_ATTEMPTS = 50;
 export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): AuthBackend {
   let stopSync: (() => void) | null = null;
 
-  // Follows and tweets made while signed in are saved in Firestore.
-  const startSync = () => {
+  const saving = (event: api.StoreEvent): Promise<void> => {
+    switch (event.type) {
+      case 'tweet': return store.saveTweet(event.tweet);
+      case 'follow': return store.saveFollow(event.followerId, event.followedId, event.createdAt);
+      case 'unfollow': return store.deleteFollow(event.followerId, event.followedId);
+      case 'like': return store.saveLike(event.reaction);
+      case 'unlike': return store.deleteLike(event.userId, event.tweetId);
+      case 'repost': return store.saveRepost(event.reaction);
+      case 'unrepost': return store.deleteRepost(event.userId, event.tweetId);
+    }
+  };
+
+ const startSync = () => {
     stopSync?.();
-    stopSync = api.subscribe((event) => {
-      let saving: Promise<void>;
-      if (event.type === 'tweet') saving = store.saveTweet(event.tweet);
-      else if (event.type === 'follow') saving = store.saveFollow(event.followerId, event.followedId);
-      else saving = store.deleteFollow(event.followerId, event.followedId);
-      saving.catch((error) => console.error('Could not save the change in Firebase', error));
+    const stopSaving = api.subscribe((event) => {
+      saving(event).catch((error) => console.error('Could not save the change in Firebase', error));
     });
+    const stopListening = store.listen((data) => api.loadRemoteData(data));
+    stopSync = () => {
+      stopSaving();
+      stopListening();
+    };
   };
 
   // Loads everything from Firestore into the app and returns the user as the app knows it.
@@ -128,6 +136,12 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       api.validateProfileChanges(changes);
       await store.updateProfile(userId, changes);
       return api.updateUser(userId, changes);
+    },
+
+    async markNotificationsSeen(userId) {
+      const user = api.markNotificationsSeen(userId);
+      await store.saveNotificationsSeen(userId, user.notificationsSeenAt ?? Date.now());
+      return user;
     },
 
     async logout() {

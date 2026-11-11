@@ -1,52 +1,62 @@
 import { useState } from 'react';
-import type { SyntheticEvent } from 'react';
+import type { ChangeEvent, SyntheticEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useCurrentUser } from '../blog/AuthContext';
 import * as api from '../blog/dataStore';
 import Notice from '../ui/components/Notice';
 import type { NoticeState } from '../ui/components/Notice';
+import { resizeImageToFit } from '../blog/images';
+
+// An animated GIF cannot be resized (it would lose the animation), so it is saved as it is if it is small enough.
+const readGif = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const url = String(reader.result);
+    if (url.length > api.MAX_TWEET_IMAGE_LENGTH) reject(new Error('The GIF is too big (maximum about 200 KB), choose a smaller one'));
+    else resolve(url);
+  };
+  reader.onerror = () => reject(new Error('Could not read the GIF'));
+  reader.readAsDataURL(file);
+});
+
+const toolStyle = { color: 'var(--blue, #1d9bf0)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' } as const;
 
 export default function ComposeTweet() {
   const currentUser = useCurrentUser();
   const [text, setText] = useState('');
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [notice, setNotice] = useState<NoticeState | null>(null);
+  // The photo or GIF of the tweet, as a small data URL that is saved in Firestore with the tweet.
+  const [imageUrl, setImageUrl] = useState('');
 
   const remaining = api.MAX_TWEET_LENGTH - text.length;
   const tooLong = remaining < 0;
 
- 
-  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setMediaFile(file);
-      setMediaPreview(URL.createObjectURL(file));
-      setNotice(null);
-    }
-  };
-
-  const handleRemoveMedia = () => {
-    setMediaFile(null);
-    setMediaPreview(null);
-  };
-
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const mediaType = mediaFile?.type.startsWith('video/') ? 'video' : 'image';
-      const mediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : undefined;
-
-      api.addTweet(currentUser.id, text, mediaUrl, mediaType);
-
+      api.addTweet(currentUser.id, text, imageUrl || undefined);
       setText('');
-      setMediaFile(null);
-      setMediaPreview(null);
+      setImageUrl('');
       setNotice({ type: 'success', message: 'Tweet posted successfully' });
     } catch (err) {
       setNotice({ type: 'error', message: err instanceof Error ? err.message : 'Could not post the tweet' });
     }
   };
+
+  // Reads the chosen file with the given function and shows it as the preview of the tweet.
+  const pick = (read: (file: File) => Promise<string>) => async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      setImageUrl(await read(file));
+      setNotice(null);
+    } catch (err) {
+      setNotice({ type: 'error', message: err instanceof Error ? err.message : 'Could not use the file' });
+    }
+  };
+  const pickPhoto = pick((file) => resizeImageToFit(file, 1024, api.MAX_TWEET_IMAGE_LENGTH));
+  const pickGif = pick(readGif);
 
   return (
     <section>
@@ -60,63 +70,32 @@ export default function ComposeTweet() {
             setNotice(null);
           }}
           placeholder="What are you thinking about?"
-          required={!mediaFile}
+          required={!imageUrl}
         />
 
-        {mediaPreview && (
-          <div style={{ position: 'relative', margin: '10px 0' }}>
-            <button
-              type="button"
-              onClick={handleRemoveMedia}
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                background: 'rgba(0,0,0,0.7)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                width: '28px',
-                height: '28px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ✕
-            </button>
-            {mediaFile?.type.startsWith('video/') ? (
-              <video src={mediaPreview} controls style={{ width: '100%', maxHeight: '250px', borderRadius: '12px', objectFit: 'cover' }} />
-            ) : (
-              <img src={mediaPreview} alt="Preview" style={{ width: '100%', maxHeight: '250px', borderRadius: '12px', objectFit: 'cover' }} />
-            )}
+        {imageUrl && (
+          <div className="compose-photo">
+            <img src={imageUrl} alt="Photo to post" />
+            <button type="button" className="link-button" onClick={() => setImageUrl('')}>Remove photo</button>
           </div>
         )}
 
         <div className="row compose-footer">
-          <div className="compose-tools">
-  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-    <input
-      type="file"
-      id="media-input"
-      accept="image/*,video/*"
-      style={{ display: 'none' }}
-      onChange={handleMediaChange}
-    />
-    <label htmlFor="media-input" className="tool-icon" title="Adjuntar foto o video">
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="tweet-icon-svg">
-        <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5 5h14v11.17l-3.29-3.29c-.39-.39-1.02-.39-1.41 0L12 15.59l-2.29-2.3c-.39-.39-1.02-.39-1.41 0L5 16.17V5zm14 14H5v-1.17l3.29-3.29c.39-.39 1.02-.39 1.41 0L12 16.41l4.29-4.3c.39-.39 1.02-.39 1.41 0L19 17.83V19z" />
-      </svg>
-    </label>
+          <div className="compose-tools" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginRight: 'auto' }}>
+            <input type="file" id="photo-input" accept="image/*" style={{ display: 'none' }} onChange={pickPhoto} aria-label="Add a photo" />
+            <label htmlFor="photo-input" className="tool-icon" style={toolStyle} title="Add a photo">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="tweet-icon-svg" width="20" height="20">
+                <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5 5h14v11.17l-3.29-3.29c-.39-.39-1.02-.39-1.41 0L12 15.59l-2.29-2.3c-.39-.39-1.02-.39-1.41 0L5 16.17V5zm14 14H5v-1.17l3.29-3.29c.39-.39 1.02-.39 1.41 0L12 16.41l4.29-4.3c.39-.39 1.02-.39 1.41 0L19 17.83V19z" />
+              </svg>
+            </label>
 
-    <label htmlFor="media-input" className="tool-gif" title="Adjuntar GIF">
-      GIF
-    </label>
-  </div>
-</div>
+            <input type="file" id="gif-input" accept="image/gif" style={{ display: 'none' }} onChange={pickGif} aria-label="Add a GIF" />
+            <label htmlFor="gif-input" className="tool-gif" style={{ ...toolStyle, fontWeight: 700, fontSize: '13px', border: '1px solid currentColor', borderRadius: '4px', padding: '1px 5px' }} title="Add a GIF">GIF</label>
+          </div>
 
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <span className={`char-count ${tooLong ? 'over' : ''}`}>{remaining}</span>
-            <button type="submit" className="btn" disabled={tooLong || (!text.trim() && !mediaFile)}>[Post]</button>
+            <button type="submit" className="btn" disabled={tooLong || (!text.trim() && !imageUrl)}>[Post]</button>
           </div>
         </div>
       </form>
