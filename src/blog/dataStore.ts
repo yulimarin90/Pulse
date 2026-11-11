@@ -150,10 +150,20 @@ export function getFeed(userId: number): TweetWithAuthor[] {
 }
 
 // Throws when the tweet is empty or longer than MAX_TWEET_LENGTH characters.
-export function addTweet(userId: number, text: string): void {
-  if (!text.trim()) throw new Error('Write something before posting');
+// Throws when the tweet is empty or longer than MAX_TWEET_LENGTH characters.
+export function addTweet(userId: number, text: string, mediaUrl?: string, mediaType?: 'image' | 'video'): void {
+  if (!text.trim() && !mediaUrl) throw new Error('Write something or attach media before posting');
   if (text.length > MAX_TWEET_LENGTH) throw new Error(`A tweet cannot exceed ${MAX_TWEET_LENGTH} characters`);
-  const tweet: Tweet = { id: newId(), userId, text: text.trim(), createdAt: Date.now() };
+  
+  const tweet: Tweet = { 
+    id: newId(), 
+    userId, 
+    text: text.trim(), 
+    createdAt: Date.now(),
+    mediaUrl,
+    mediaType
+  };
+  
   tweets.push(tweet);
   emit({ type: 'tweet', tweet });
 }

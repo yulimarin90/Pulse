@@ -23,6 +23,8 @@ export interface Tweet {
     userId: number,
     text: string,
     createdAt: number,
+    mediaUrl?: string;    
+    mediaType?: 'image' | 'video'; 
 }
 
 export interface TweetWithAuthor extends Tweet {

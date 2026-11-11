@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
-import usePagination   from '../../blog/usePagination';
+import usePagination from '../../blog/usePagination';
 import type { TweetWithAuthor } from "../../blog/types";
 import Avatar from './Avatar';
-import Pagination   from "./Pagination";
+import Pagination from "./Pagination";
 import VerifiedBadge from './VerifiedBadge';
+import { Link } from 'react-router-dom';
 
 const formatDateTime = (timestamp: number): string => new Date(timestamp)
     .toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
@@ -26,6 +26,25 @@ export default function TweetList({ tweets }: { tweets: TweetWithAuthor[] }) {
                             <time className="muted" dateTime={new Date(tweet.createdAt).toISOString()}>{formatDateTime(tweet.createdAt)}</time>
                         </p>
                         <p>{tweet.text}</p>
+
+                       
+                        {tweet.mediaUrl && (
+                          <div className="tweet-media-container" style={{ marginTop: '10px' }}>
+                            {tweet.mediaType === 'video' ? (
+                              <video 
+                                src={tweet.mediaUrl} 
+                                controls 
+                                style={{ width: '100%', maxHeight: '300px', borderRadius: '12px', objectFit: 'cover' }} 
+                              />
+                            ) : (
+                              <img 
+                                src={tweet.mediaUrl} 
+                                alt="Tweet media" 
+                                style={{ width: '100%', maxHeight: '300px', borderRadius: '12px', objectFit: 'cover' }} 
+                              />
+                            )}
+                          </div>
+                        )}
                     </div>
                 </li>
             ))}

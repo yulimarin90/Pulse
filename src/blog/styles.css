@@ -196,3 +196,45 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
 .btn-following:hover { background: rgba(244, 33, 46, 0.1); color: #f4212e; border-color: rgba(244, 33, 46, 0.5); }
 .btn-following .label-unfollow, .btn-following:hover .label-following { display: none; }
 .btn-following:hover .label-unfollow { display: inline; }
+
+.compose-tools { display: flex; gap: 16px; align-items: center;}
+.tool-icon {
+  cursor: pointer;
+  color: #1d9bf0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.tweet-icon-svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.tool-icon:hover {
+  opacity: 0.8;
+}
+
+.tool-gif {
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border: 1.5px solid #1d9bf0;
+  color: #1d9bf0;
+  padding: 1px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  line-height: 1;
+  height: 18px;
+}
+
+.tool-gif:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+}
