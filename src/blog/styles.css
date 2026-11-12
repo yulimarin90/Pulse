@@ -241,6 +241,8 @@ input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shad
 .replying-to { margin-top: 2px; font-size: 14px; }
 .reply-form { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .notif-clickable { cursor: pointer; }
+.action-bookmark { margin-left: auto; min-width: 0; }
+.action-bookmark:hover, .action-bookmark.active { color: var(--blue); }
 
 /* Tweet */
 .compose-tools { display: flex; gap: 16px; align-items: center;}

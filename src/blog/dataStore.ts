@@ -1,4 +1,3 @@
-
 import type { AppNotification, ProfileChanges, Reaction, Tweet, TweetWithAuthor, User } from './types';
 
 export const MAX_TWEET_LENGTH = 280;
@@ -12,11 +11,11 @@ export const MAX_TWEET_IMAGE_LENGTH = 300_000;
 const users: User[] = [];
 // [followerId, followedId]
 const follows: Array<[number, number]> = [];
-
 let followedAt: Record<string, number> = {};
 const tweets: Tweet[] = [];
 const likes: Reaction[] = [];
 const reposts: Reaction[] = [];
+const bookmarks: Reaction[] = [];
 
 let dataVersion = 0;
 const dataListeners = new Set<() => void>();
@@ -29,6 +28,7 @@ export function onDataChange(listener: () => void): () => void {
   return () => dataListeners.delete(listener);
 }
 export const getDataVersion = (): number => dataVersion;
+
 export const normalizeUsername = (value: string): string => value.trim().toLowerCase().replace(/^@/, '');
 export const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 export const USERNAME_PATTERN = /^[a-z0-9_]{1,30}$/;
@@ -40,7 +40,6 @@ export const newId = (): number => {
   return lastId;
 };
 
-// Changes that must also be saved outside of this file (backend.ts saves them in Firestore).
 export type StoreEvent =
   | { type: 'follow'; followerId: number; followedId: number; createdAt: number }
   | { type: 'unfollow'; followerId: number; followedId: number }
@@ -48,7 +47,9 @@ export type StoreEvent =
   | { type: 'like'; reaction: Reaction }
   | { type: 'unlike'; userId: number; tweetId: number }
   | { type: 'repost'; reaction: Reaction }
-  | { type: 'unrepost'; userId: number; tweetId: number };
+  | { type: 'unrepost'; userId: number; tweetId: number }
+  | { type: 'bookmark'; reaction: Reaction }
+  | { type: 'unbookmark'; userId: number; tweetId: number };
 
 const listeners = new Set<(event: StoreEvent) => void>();
 export function subscribe(listener: (event: StoreEvent) => void): () => void {
@@ -65,6 +66,7 @@ export interface DataSnapshot {
   tweets: Tweet[];
   likes?: Reaction[];
   reposts?: Reaction[];
+  bookmarks?: Reaction[];
 }
 
 export function loadRemoteData(data: DataSnapshot): void {
@@ -76,6 +78,7 @@ export function loadRemoteData(data: DataSnapshot): void {
   const known = (r: Reaction) => ids.has(r.userId) && tweetIds.has(r.tweetId);
   likes.splice(0, likes.length, ...(data.likes ?? []).filter(known));
   reposts.splice(0, reposts.length, ...(data.reposts ?? []).filter(known));
+  bookmarks.splice(0, bookmarks.length, ...(data.bookmarks ?? []).filter(known));
   followedAt = { ...data.followedAt };
   notifyChange();
 }
@@ -86,7 +89,6 @@ const byNewest = (a: Tweet, b: Tweet) => b.createdAt - a.createdAt;
 export const getUserById = (id: number): User | undefined => users.find((u) => u.id === id);
 export const getUserByUsername = (username: string): User | undefined => users.find((u) => u.username === username);
 
-// Throws a readable message when a profile change is not valid.
 export function validateProfileChanges(changes: ProfileChanges): void {
   if (changes.fullName !== undefined) {
     if (!changes.fullName.trim()) throw new Error('The name cannot be empty');
@@ -125,7 +127,6 @@ const isReply = (tweet: Tweet): boolean => tweet.replyToId !== undefined;
 
 export const getTweets = (): TweetWithAuthor[] => tweets.filter((t) => !isReply(t)).sort(byNewest).map(withAuthor);
 
-// Pairs are [followerId, followedId]: following filters by the first one, followers by the second.
 export const getFollowing = (userId: number): User[] => follows
   .filter(([follower]) => follower === userId)
   .map(([, followed]) => requireUser(followed))
@@ -159,6 +160,7 @@ export function follow(followerId: number, followedId: number): void {
   notifyChange();
 }
 
+// Stops following a user. Does nothing when the user was not followed
 export function unfollow(followerId: number, followedId: number): void {
   const index = follows.findIndex(([follower, followed]) => follower === followerId && followed === followedId);
   if (index === -1) return;
@@ -190,8 +192,10 @@ function createTweet(userId: number, text: string, imageUrl?: string, replyToId?
   notifyChange();
 }
 
+// Throws when the tweet is empty (no text and no photo) or longer than MAX_TWEET_LENGTH characters
 export const addTweet = (userId: number, text: string, imageUrl?: string): void => createTweet(userId, text, imageUrl);
 
+// A reply (comment) to a tweet. Same rules as a tweet; throws when the tweet does not exist
 export function addReply(userId: number, tweetId: number, text: string, imageUrl?: string): void {
   if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
   createTweet(userId, text, imageUrl, tweetId);
@@ -202,6 +206,7 @@ export const getTweetById = (tweetId: number): TweetWithAuthor | undefined => {
   return tweet && withAuthor(tweet);
 };
 
+// Direct replies of a tweet, oldest first
 export const getReplies = (tweetId: number): TweetWithAuthor[] => tweets
   .filter((t) => t.replyToId === tweetId).sort((a, b) => a.createdAt - b.createdAt).map(withAuthor);
 export const getReplyCount = (tweetId: number): number => tweets.filter((t) => t.replyToId === tweetId).length;
@@ -213,6 +218,7 @@ export const isReposted = (userId: number, tweetId: number): boolean => reposts.
 export const getLikeCount = (tweetId: number): number => likes.filter((l) => l.tweetId === tweetId).length;
 export const getRepostCount = (tweetId: number): number => reposts.filter((r) => r.tweetId === tweetId).length;
 
+// Likes the tweet, or removes the like when it was already liked. Returns true when it is liked now
 export function toggleLike(userId: number, tweetId: number): boolean {
   if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
   const index = likes.findIndex((l) => l.userId === userId && l.tweetId === tweetId);
@@ -229,6 +235,7 @@ export function toggleLike(userId: number, tweetId: number): boolean {
   return true;
 }
 
+// Reposts the tweet, or removes the repost when it was already reposted. Returns true when it is reposted now.
 export function toggleRepost(userId: number, tweetId: number): boolean {
   if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
   const index = reposts.findIndex((r) => r.userId === userId && r.tweetId === tweetId);
@@ -245,6 +252,35 @@ export function toggleRepost(userId: number, tweetId: number): boolean {
   return true;
 }
 
+export const isBookmarked = (userId: number, tweetId: number): boolean => bookmarks.some((b) => b.userId === userId && b.tweetId === tweetId);
+
+// Saves the tweet, or removes it from the saved tweets when it was already saved. Returns true when it is saved now.
+export function toggleBookmark(userId: number, tweetId: number): boolean {
+  if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
+  const index = bookmarks.findIndex((b) => b.userId === userId && b.tweetId === tweetId);
+  if (index !== -1) {
+    bookmarks.splice(index, 1);
+    emit({ type: 'unbookmark', userId, tweetId });
+    notifyChange();
+    return false;
+  }
+  const reaction: Reaction = { userId, tweetId, createdAt: Date.now() };
+  bookmarks.push(reaction);
+  emit({ type: 'bookmark', reaction });
+  notifyChange();
+  return true;
+}
+
+// The tweets the person saved, the last saved first.
+export function getBookmarkedTweets(userId: number): TweetWithAuthor[] {
+  return bookmarks
+    .filter((b) => b.userId === userId)
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .flatMap((b) => tweets.filter((t) => t.id === b.tweetId))
+    .map(withAuthor);
+}
+
+// Profile tabs. Replies written by the user, tweets the user reposted (last repost first) and tweets with a photo.
 export const getRepliesByUser = (userId: number): TweetWithAuthor[] => tweets
   .filter((t) => t.userId === userId && isReply(t)).sort(byNewest).map(withAuthor);
 
@@ -259,6 +295,7 @@ export function getRepostedTweets(userId: number): TweetWithAuthor[] {
 export const getMediaTweetsByUser = (userId: number): TweetWithAuthor[] => tweets
   .filter((t) => t.userId === userId && t.imageUrl).sort(byNewest).map(withAuthor);
 
+// Follows a user typed by username. Throws when the user does not exist, is yourself or is already followed.
 export function followByUsername(followerId: number, username: string): User {
   const normalizedUsername = normalizeUsername(username);
   if (!normalizedUsername) throw new Error('Enter a username');
@@ -275,13 +312,19 @@ const tweetsOf = (people: User[]): TweetWithAuthor[] => {
   return tweets.filter((t) => ids.includes(t.userId) && !isReply(t)).sort(byNewest).map(withAuthor);
 };
 
-// Tweets written by the people the user follows / by the user's followers.
+// Tweets written by the people the user follows / by the user's followers
 export const getFollowingTweets = (userId: number): TweetWithAuthor[] => tweetsOf(getFollowing(userId));
 export const getFollowersTweets = (userId: number): TweetWithAuthor[] => tweetsOf(getFollowers(userId));
 
 // ---------- Notifications ----------
 export const mentionsUsername = (text: string, username: string): boolean => new RegExp(`(^|[^a-z0-9_])@${username}(?![a-z0-9_])`, 'i').test(text);
 
+/* What the user can see in the notifications, newest first:
+  - 'follow': 
+  - 'reply': 
+  - 'like' 
+  - 'mention': 
+  - 'tweet': */
 export function getNotifications(userId: number): AppNotification[] {
   const me = getUserById(userId);
   if (!me) return [];

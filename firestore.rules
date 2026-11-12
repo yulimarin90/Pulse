@@ -68,6 +68,15 @@ service cloud.firestore {
       allow delete: if signedIn() && ownsProfile(resource.data.userId);
     }
 
+    // The saved tweets (bookmarks) are private: only their owner can read, create or delete them.
+    match /bookmarks/{bookmarkId} {
+      allow read: if signedIn() && ownsProfile(resource.data.userId);
+      allow create: if signedIn() && ownsProfile(request.resource.data.userId)
+                    && bookmarkId == string(request.resource.data.userId) + '_' + string(request.resource.data.tweetId);
+      allow update: if false;
+      allow delete: if signedIn() && ownsProfile(resource.data.userId);
+    }
+
     // A person can only post tweets as themselves: up to 280 characters, with an optional small photo.
     // A tweet needs text or a photo. A reply is a tweet with the replyToId of the tweet it answers.
     match /tweets/{tweetId} {

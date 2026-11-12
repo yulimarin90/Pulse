@@ -1,4 +1,5 @@
-
+/* Sign in, register and save the data with Firebase Authentication + Firestore.
+ The screens do not know about Firebase: they only use AuthContext and dataStore.*/
 import * as api from './dataStore';
 import { firebaseAuthService, getAuthErrorMessage, isWrongCredentialError } from './firebase';
 import type { AuthService, SocialProvider } from './firebase';
@@ -35,25 +36,29 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       case 'unlike': return store.deleteLike(event.userId, event.tweetId);
       case 'repost': return store.saveRepost(event.reaction);
       case 'unrepost': return store.deleteRepost(event.userId, event.tweetId);
+      case 'bookmark': return store.saveBookmark(event.reaction);
+      case 'unbookmark': return store.deleteBookmark(event.userId, event.tweetId);
     }
   };
 
- const startSync = () => {
+  // Follows, tweets, likes and reposts made while signed in are saved in Firestore, and what other people do (a new
+  // follower, a like, a reply) arrives here while the app is open, so the notifications update by themselves.
+  const startSync = (userId: number) => {
     stopSync?.();
     const stopSaving = api.subscribe((event) => {
       saving(event).catch((error) => console.error('Could not save the change in Firebase', error));
     });
-    const stopListening = store.listen((data) => api.loadRemoteData(data));
+    const stopListening = store.listen((data) => api.loadRemoteData(data), userId);
     stopSync = () => {
       stopSaving();
       stopListening();
     };
   };
 
-  // Loads everything from Firestore into the app and returns the user as the app knows it.
+  // Loads everything from Firestore into the app and returns the user as the app knows it
   const openSession = async (profile: User): Promise<User> => {
-    api.loadRemoteData(await store.loadAll());
-    startSync();
+    api.loadRemoteData(await store.loadAll(profile.id));
+    startSync(profile.id);
     return api.getUserById(profile.id) ?? profile;
   };
 
@@ -125,7 +130,6 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       try {
         await store.createProfile(profile, uid);
       } catch (error) {
-        // Someone took the username in the meantime: undo the account so the email is free again.
         await auth.deleteCurrentUser().catch(() => undefined);
         throw error;
       }

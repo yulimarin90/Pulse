@@ -1,18 +1,4 @@
-// Fills Firestore with sample users and tweets so the lists have enough rows to test the pagination.
-//
-// Usage:  npm run seed -- <username> [<username> ...] [--dry-run]
-//
-//  - creates 120 sample people (ids 3 to 122), 14 sample companies (ids 123 to 136) and 188 sample tweets
-//    (the company tweets have a photo)
-//    (the first names repeat, the last names do not: the Search page lists them as people to follow)
-//  - for every username you pass (people who already registered in the app) it also creates
-//    follows (with date): that person follows 43 sample users, 51 sample users follow that person, and
-//    3 sample users mention that person in a tweet, and a sample tweet of that person gets 6 likes, 3 reposts
-//    and 2 replies. They appear in the notifications.
-//  - --dry-run only prints what would be written
-//
-// It uses the Firebase Admin SDK, so it ignores the security rules. It needs a service account key:
-// save it as serviceAccountKey.json in the project root, or set GOOGLE_APPLICATION_CREDENTIALS.
+
 import { readFileSync } from 'node:fs';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -45,7 +31,7 @@ const people = Array.from({ length: FIRST_NAMES.length * LAST_NAMES.length }, (_
     email: `${first}.${last}@example.com`.toLowerCase(),
   };
 });
-// Companies come after the people. They have no photo, so the app shows their initials.
+// Companies come after the people. They have no photo, so the app shows their initials
 const companies = COMPANIES.map(([fullName, username], i) => ({
   id: people.length + 3 + i,
   fullName,
@@ -61,11 +47,9 @@ const sampleTweets = [
   ...Array.from({ length: 60 }, (_, i) => ({ id: i + 101, userId: 30 + (i % 30), text: `Sample tweet #${i + 101}`, createdAt: now - (i + 100) * HOUR })),
 ];
 
-// Small colored square used as the photo of the sample company tweets.
 const samplePhoto = (color, label) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><rect width="320" height="320" fill="${color}"/><text x="160" y="190" font-size="110" font-family="Arial" font-weight="700" fill="#fff" text-anchor="middle">${label}</text></svg>`);
 const COLORS = ['#0a7a3d', '#1d4ed8', '#b45309', '#7c3aed', '#be123c', '#0e7490', '#4d7c0f'];
-// Two tweets with a photo for each company, so the notifications show how the photos look.
 sampleTweets.push(...companies.flatMap((company, i) => [0, 1].map((k) => ({
   id: 200 + i * 2 + k,
   userId: company.id,
@@ -101,14 +85,14 @@ for (const username of usernames) {
     console.warn(`@${username} is not registered in the app yet. Skipped.`);
     continue;
   }
-  // Every follow has a date, so the notifications can say when somebody followed.
+  // Every follow has a date, so the notifications can say when somebody followed
   for (let id = 3; id <= 45; id += 1) set(`follows/${userId}_${id}`, { followerId: userId, followedId: id, createdAt: now - id * 60_000 });
   for (let id = 30; id <= 80; id += 1) set(`follows/${id}_${userId}`, { followerId: id, followedId: userId, createdAt: now - (id - 29) * 15 * 60_000 });
   // Three people mention the user in a tweet.
   for (let k = 0; k < 3; k += 1) {
     set(`tweets/${1000 + usernames.indexOf(username) * 10 + k}`, { id: 1000 + usernames.indexOf(username) * 10 + k, userId: 3 + k, text: `Welcome to Pulse, @${username}! This is mention #${k + 1}.`, createdAt: now - (k + 1) * 7 * 60_000 });
   }
-  // A tweet of the user with 6 likes, 3 reposts and 2 replies from sample users, to see those notifications.
+  // A tweet of the user with 6 likes, 3 reposts and 2 replies from sample users, to see those notifications
   const own = 2000 + usernames.indexOf(username) * 10;
   set(`tweets/${own}`, { id: own, userId, text: 'My first sample tweet. Like it, repost it or reply to it!', createdAt: now - 3 * HOUR });
   for (let k = 0; k < 6; k += 1) set(`likes/${3 + k}_${own}`, { userId: 3 + k, tweetId: own, createdAt: now - (k + 1) * 5 * 60_000 });

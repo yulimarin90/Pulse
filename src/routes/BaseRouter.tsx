@@ -10,6 +10,7 @@ import UserTweets from '../pages/UserTweets';
 import Feed from '../pages/Feed';
 import Search from '../pages/Search';
 import EditProfile from '../pages/EditProfile';
+import Bookmarks from '../pages/Bookmarks';
 import Notifications from '../pages/Notifications';
 import TweetDetail from '../pages/TweetDetail';
 
@@ -33,6 +34,7 @@ export default function BaseRouter() {
           {/* Rutas añadidas para los iconos de la barra inferior */}
           <Route path="/search" element={<Search />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/bookmarks" element={<Bookmarks />} />
           <Route path="/messages" element={<div>Messages</div>} />
         </Route>
 

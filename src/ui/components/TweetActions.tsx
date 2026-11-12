@@ -13,6 +13,7 @@ export default function TweetActions({ tweet }: { tweet: Tweet }) {
   useDataVersion();
   const liked = api.isLiked(currentUser.id, tweet.id);
   const reposted = api.isReposted(currentUser.id, tweet.id);
+  const bookmarked = api.isBookmarked(currentUser.id, tweet.id);
 
   const run = (action: () => unknown) => {
     try {
@@ -35,6 +36,10 @@ export default function TweetActions({ tweet }: { tweet: Tweet }) {
       <button type="button" className={`tweet-action action-like ${liked ? 'active' : ''}`} aria-pressed={liked} aria-label={liked ? 'Remove like' : 'Like'} onClick={() => run(() => api.toggleLike(currentUser.id, tweet.id))}>
         <svg {...iconProps} fill={liked ? 'currentColor' : 'none'}><path d="M20.800 4.600a5.500 5.500 0 0 0-7.800 0L12 5.700l-1-1.100a5.500 5.500 0 0 0-7.800 7.800l1 1.100L12 21l7.800-7.500 1-1.100a5.500 5.500 0 0 0 0-7.800z" /></svg>
         <span className="action-count">{countLabel(api.getLikeCount(tweet.id))}</span>
+      </button>
+      <button type="button" className={`tweet-action action-bookmark ${bookmarked ? 'active' : ''}`} aria-pressed={bookmarked} aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark'} onClick={() => run(() => api.toggleBookmark(currentUser.id, tweet.id))}>
+        <svg {...iconProps} fill={bookmarked ? 'currentColor' : 'none'}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.500L5 21V4a1 1 0 0 1 1-1z" /></svg>
+        
       </button>
     </div>
   );

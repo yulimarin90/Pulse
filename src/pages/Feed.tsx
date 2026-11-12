@@ -17,10 +17,16 @@ export default function Feed() {
 
   // For You: your tweets and the ones from people you follow. The other tabs only show one group.
   const tweetsByTab = {
-    forYou: () => api.getFeed(currentUser.id),
+    forYou: () => api.getTweets(),
     following: () => api.getFollowingTweets(currentUser.id),
     //followers: () => api.getFollowersTweets(currentUser.id),
   };
+
+  const EMPTY: Record<Tab, string> = {
+    forYou: 'There are no posts yet.',
+    following: 'The people you follow have not posted yet. Follow people from the search to see their posts here.',
+  };
+  const tweets = tweetsByTab[activeTab]();
 
   return (
     <section>
@@ -37,7 +43,7 @@ export default function Feed() {
         ))}
       </div>
 
-      <TweetList key={activeTab} tweets={tweetsByTab[activeTab]()} />
+      {tweets.length === 0 ? <p className="empty-tab muted">{EMPTY[activeTab]}</p> : <TweetList key={activeTab} tweets={tweets} />}
     </section>
   );
 }
