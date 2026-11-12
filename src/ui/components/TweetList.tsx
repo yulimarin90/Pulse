@@ -26,7 +26,7 @@ function ReplyingTo({ tweet }: { tweet: TweetWithAuthor }) {
 
 export default function TweetList({ tweets }: { tweets: TweetWithAuthor[] }) {
     const { pageItems, page, totalPages, setPage } = usePagination(tweets);
-    // Moment used to write the "2h" of each tweet.
+    // Moment used to write the "2h" of each tweet
     const [now] = useState(() => Date.now());
 
   return (

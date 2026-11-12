@@ -1,3 +1,4 @@
+
 import type { AppNotification, ProfileChanges, Reaction, Tweet, TweetWithAuthor, User } from './types';
 
 export const MAX_TWEET_LENGTH = 280;
@@ -28,7 +29,6 @@ export function onDataChange(listener: () => void): () => void {
   return () => dataListeners.delete(listener);
 }
 export const getDataVersion = (): number => dataVersion;
-
 export const normalizeUsername = (value: string): string => value.trim().toLowerCase().replace(/^@/, '');
 export const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 export const USERNAME_PATTERN = /^[a-z0-9_]{1,30}$/;
@@ -69,6 +69,7 @@ export interface DataSnapshot {
   bookmarks?: Reaction[];
 }
 
+// Replaces the local data with the data stored in Firestore. Follows, tweets and reactions of unknown users are ignored.
 export function loadRemoteData(data: DataSnapshot): void {
   const ids = new Set(data.users.map((u) => u.id));
   users.splice(0, users.length, ...data.users);
@@ -89,6 +90,7 @@ const byNewest = (a: Tweet, b: Tweet) => b.createdAt - a.createdAt;
 export const getUserById = (id: number): User | undefined => users.find((u) => u.id === id);
 export const getUserByUsername = (username: string): User | undefined => users.find((u) => u.username === username);
 
+// Throws a readable message when a profile change is not valid.
 export function validateProfileChanges(changes: ProfileChanges): void {
   if (changes.fullName !== undefined) {
     if (!changes.fullName.trim()) throw new Error('The name cannot be empty');
@@ -123,10 +125,29 @@ function requireUser(id: number): User {
 }
 
 const withAuthor = (tweet: Tweet): TweetWithAuthor => ({ ...tweet, author: requireUser(tweet.userId) });
+
+export const isGiphyMediaUrl = (url: string): boolean => /^https:\/\/(media[0-9]*|i)\.giphy\.com\/[^\s]+$/.test(url);
+export function parseGiphyLink(text: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(text.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:') return null;
+  if (isGiphyMediaUrl(url.href)) return url.href;
+  if (url.hostname !== 'giphy.com' && url.hostname !== 'www.giphy.com') return null;
+  const [section, last] = url.pathname.split('/').filter(Boolean);
+  if (section !== 'gifs' && section !== 'embed' && section !== 'stickers') return null;
+  const id = (last ?? '').split('-').pop() ?? '';
+  return /^[A-Za-z0-9]+$/.test(id) ? `https://media.giphy.com/media/${id}/giphy.gif` : null;
+}
+
 const isReply = (tweet: Tweet): boolean => tweet.replyToId !== undefined;
 
 export const getTweets = (): TweetWithAuthor[] => tweets.filter((t) => !isReply(t)).sort(byNewest).map(withAuthor);
 
+// Pairs are [followerId, followedId]: following filters by the first one, followers by the second.
 export const getFollowing = (userId: number): User[] => follows
   .filter(([follower]) => follower === userId)
   .map(([, followed]) => requireUser(followed))
@@ -160,7 +181,7 @@ export function follow(followerId: number, followedId: number): void {
   notifyChange();
 }
 
-// Stops following a user. Does nothing when the user was not followed
+// Stops following a user. Does nothing when the user was not followed.
 export function unfollow(followerId: number, followedId: number): void {
   const index = follows.findIndex(([follower, followed]) => follower === followerId && followed === followedId);
   if (index === -1) return;
@@ -182,6 +203,7 @@ function createTweet(userId: number, text: string, imageUrl?: string, replyToId?
   if (!text.trim() && !imageUrl) throw new Error('Write something before posting');
   if (text.length > MAX_TWEET_LENGTH) throw new Error(`A tweet cannot exceed ${MAX_TWEET_LENGTH} characters`);
   if (imageUrl && imageUrl.length > MAX_TWEET_IMAGE_LENGTH) throw new Error('The photo is too big, choose another one');
+  if (imageUrl && !imageUrl.startsWith('data:image/') && !isGiphyMediaUrl(imageUrl)) throw new Error('That picture is not valid');
   const tweet: Tweet = {
     id: newId(), userId, text: text.trim(), createdAt: Date.now(),
     ...(imageUrl ? { imageUrl } : {}),
@@ -192,10 +214,8 @@ function createTweet(userId: number, text: string, imageUrl?: string, replyToId?
   notifyChange();
 }
 
-// Throws when the tweet is empty (no text and no photo) or longer than MAX_TWEET_LENGTH characters
 export const addTweet = (userId: number, text: string, imageUrl?: string): void => createTweet(userId, text, imageUrl);
 
-// A reply (comment) to a tweet. Same rules as a tweet; throws when the tweet does not exist
 export function addReply(userId: number, tweetId: number, text: string, imageUrl?: string): void {
   if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
   createTweet(userId, text, imageUrl, tweetId);
@@ -206,19 +226,18 @@ export const getTweetById = (tweetId: number): TweetWithAuthor | undefined => {
   return tweet && withAuthor(tweet);
 };
 
-// Direct replies of a tweet, oldest first
+// Direct replies of a tweet, oldest first (as a conversation).
 export const getReplies = (tweetId: number): TweetWithAuthor[] => tweets
   .filter((t) => t.replyToId === tweetId).sort((a, b) => a.createdAt - b.createdAt).map(withAuthor);
 export const getReplyCount = (tweetId: number): number => tweets.filter((t) => t.replyToId === tweetId).length;
 
 // ---------- Likes and reposts ----------
-
 export const isLiked = (userId: number, tweetId: number): boolean => likes.some((l) => l.userId === userId && l.tweetId === tweetId);
 export const isReposted = (userId: number, tweetId: number): boolean => reposts.some((r) => r.userId === userId && r.tweetId === tweetId);
 export const getLikeCount = (tweetId: number): number => likes.filter((l) => l.tweetId === tweetId).length;
 export const getRepostCount = (tweetId: number): number => reposts.filter((r) => r.tweetId === tweetId).length;
 
-// Likes the tweet, or removes the like when it was already liked. Returns true when it is liked now
+// Likes the tweet, or removes the like when it was already liked. Returns true when it is liked now.
 export function toggleLike(userId: number, tweetId: number): boolean {
   if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
   const index = likes.findIndex((l) => l.userId === userId && l.tweetId === tweetId);
@@ -279,8 +298,6 @@ export function getBookmarkedTweets(userId: number): TweetWithAuthor[] {
     .flatMap((b) => tweets.filter((t) => t.id === b.tweetId))
     .map(withAuthor);
 }
-
-// Profile tabs. Replies written by the user, tweets the user reposted (last repost first) and tweets with a photo.
 export const getRepliesByUser = (userId: number): TweetWithAuthor[] => tweets
   .filter((t) => t.userId === userId && isReply(t)).sort(byNewest).map(withAuthor);
 
@@ -312,19 +329,14 @@ const tweetsOf = (people: User[]): TweetWithAuthor[] => {
   return tweets.filter((t) => ids.includes(t.userId) && !isReply(t)).sort(byNewest).map(withAuthor);
 };
 
-// Tweets written by the people the user follows / by the user's followers
+// Tweets written by the people the user follows / by the user's followers.
 export const getFollowingTweets = (userId: number): TweetWithAuthor[] => tweetsOf(getFollowing(userId));
 export const getFollowersTweets = (userId: number): TweetWithAuthor[] => tweetsOf(getFollowers(userId));
 
 // ---------- Notifications ----------
+
 export const mentionsUsername = (text: string, username: string): boolean => new RegExp(`(^|[^a-z0-9_])@${username}(?![a-z0-9_])`, 'i').test(text);
 
-/* What the user can see in the notifications, newest first:
-  - 'follow': 
-  - 'reply': 
-  - 'like' 
-  - 'mention': 
-  - 'tweet': */
 export function getNotifications(userId: number): AppNotification[] {
   const me = getUserById(userId);
   if (!me) return [];
@@ -363,6 +375,7 @@ export function getNotifications(userId: number): AppNotification[] {
   return result.sort((a, b) => b.createdAt - a.createdAt);
 }
 
+// Moment from which the notifications are unread: the last time they were opened, or when the user registered.
 export const getNotificationsSeenAt = (user: User): number => user.notificationsSeenAt ?? getJoinedAt(user) ?? 0;
 
 export function getUnreadNotificationCount(userId: number): number {

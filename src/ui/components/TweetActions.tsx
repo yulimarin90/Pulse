@@ -8,6 +8,8 @@ const iconProps = { viewBox: '0 0 24 24', width: 18, height: 18, fill: 'none', s
 
 const countLabel = (count: number): string => (count > 0 ? String(count) : '');
 
+// Reply, repost, like and bookmark buttons of a tweet, with their counters. They update by themselves when somebody else
+// reacts (the numbers come from Firestore).
 export default function TweetActions({ tweet }: { tweet: Tweet }) {
   const currentUser = useCurrentUser();
   useDataVersion();
@@ -39,7 +41,6 @@ export default function TweetActions({ tweet }: { tweet: Tweet }) {
       </button>
       <button type="button" className={`tweet-action action-bookmark ${bookmarked ? 'active' : ''}`} aria-pressed={bookmarked} aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark'} onClick={() => run(() => api.toggleBookmark(currentUser.id, tweet.id))}>
         <svg {...iconProps} fill={bookmarked ? 'currentColor' : 'none'}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.500L5 21V4a1 1 0 0 1 1-1z" /></svg>
-        
       </button>
     </div>
   );

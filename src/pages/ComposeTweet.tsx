@@ -7,26 +7,15 @@ import Notice from '../ui/components/Notice';
 import type { NoticeState } from '../ui/components/Notice';
 import { resizeImageToFit } from '../blog/images';
 
-// An animated GIF cannot be resized (it would lose the animation), so it is saved as it is if it is small enough.
-const readGif = (file: File): Promise<string> => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => {
-    const url = String(reader.result);
-    if (url.length > api.MAX_TWEET_IMAGE_LENGTH) reject(new Error('The GIF is too big (maximum about 200 KB), choose a smaller one'));
-    else resolve(url);
-  };
-  reader.onerror = () => reject(new Error('Could not read the GIF'));
-  reader.readAsDataURL(file);
-});
-
 const toolStyle = { color: 'var(--blue, #1d9bf0)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' } as const;
 
 export default function ComposeTweet() {
   const currentUser = useCurrentUser();
   const [text, setText] = useState('');
   const [notice, setNotice] = useState<NoticeState | null>(null);
-  // The photo or GIF of the tweet, as a small data URL that is saved in Firestore with the tweet.
   const [imageUrl, setImageUrl] = useState('');
+  const [showGifs, setShowGifs] = useState(false);
+  const [gifLink, setGifLink] = useState('');
 
   const remaining = api.MAX_TWEET_LENGTH - text.length;
   const tooLong = remaining < 0;
@@ -56,7 +45,20 @@ export default function ComposeTweet() {
     }
   };
   const pickPhoto = pick((file) => resizeImageToFit(file, 1024, api.MAX_TWEET_IMAGE_LENGTH));
-  const pickGif = pick(readGif);
+
+  // The person chooses the GIF in GIPHY, copies its link and pastes it here.
+  const handleGifLink = (e: SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const url = api.parseGiphyLink(gifLink);
+    if (!url) {
+      setNotice({ type: 'error', message: 'Paste a GIPHY link, like https://giphy.com/gifs/...' });
+      return;
+    }
+    setImageUrl(url);
+    setGifLink('');
+    setShowGifs(false);
+    setNotice(null);
+  };
 
   return (
     <section>
@@ -89,8 +91,7 @@ export default function ComposeTweet() {
               </svg>
             </label>
 
-            <input type="file" id="gif-input" accept="image/gif" style={{ display: 'none' }} onChange={pickGif} aria-label="Add a GIF" />
-            <label htmlFor="gif-input" className="tool-gif" style={{ ...toolStyle, fontWeight: 700, fontSize: '13px', border: '1px solid currentColor', borderRadius: '4px', padding: '1px 5px' }} title="Add a GIF">GIF</label>
+            <button type="button" className="tool-gif" aria-expanded={showGifs} aria-label="Add a GIF" onClick={() => setShowGifs((open) => !open)} style={{ ...toolStyle, background: 'none', font: 'inherit', fontWeight: 700, fontSize: '13px', cursor: 'pointer', border: '1px solid currentColor', borderRadius: '4px', padding: '1px 5px' }} title="Add a GIF">GIF</button>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -99,6 +100,16 @@ export default function ComposeTweet() {
           </div>
         </div>
       </form>
+      {showGifs && (
+        <div className="gif-link-box">
+          <a href="https://giphy.com/explore/gratis" target="_blank" rel="noopener noreferrer" className="accent">1. Open GIPHY and choose a GIF</a>
+          <p className="muted">2. Press "Copy link" on that GIF and paste the link here:</p>
+          <form className="gif-link" onSubmit={handleGifLink}>
+            <input type="url" placeholder="https://giphy.com/gifs/..." aria-label="GIPHY link" value={gifLink} onChange={(e) => setGifLink(e.target.value)} />
+            <button type="submit" className="btn-outline">Add GIF</button>
+          </form>
+        </div>
+      )}
       {notice && <Notice type={notice.type} message={notice.message} />}
       {notice?.type === 'success' && (
         <p className="notice-link"><Link to="/feed" className="accent">See it in your feed</Link></p>

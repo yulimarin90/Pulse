@@ -1,5 +1,4 @@
-/* Sign in, register and save the data with Firebase Authentication + Firestore.
- The screens do not know about Firebase: they only use AuthContext and dataStore.*/
+
 import * as api from './dataStore';
 import { firebaseAuthService, getAuthErrorMessage, isWrongCredentialError } from './firebase';
 import type { AuthService, SocialProvider } from './firebase';
@@ -55,7 +54,7 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
     };
   };
 
-  // Loads everything from Firestore into the app and returns the user as the app knows it
+  // Loads everything from Firestore into the app and returns the user as the app knows it.
   const openSession = async (profile: User): Promise<User> => {
     api.loadRemoteData(await store.loadAll(profile.id));
     startSync(profile.id);
@@ -130,6 +129,7 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       try {
         await store.createProfile(profile, uid);
       } catch (error) {
+        // Someone took the username in the meantime: undo the account so the email is free again.
         await auth.deleteCurrentUser().catch(() => undefined);
         throw error;
       }

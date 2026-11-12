@@ -39,6 +39,7 @@ export interface RemoteStore {
   listen(onData: (data: DataSnapshot) => void, userId: number): () => void;
 }
 
+
 async function getDb() {
   const firestore = await import('firebase/firestore');
   return { f: firestore, db: firestore.getFirestore(await getFirebaseApp()) };
@@ -68,7 +69,7 @@ const toReaction = (data: Reaction): Reaction => ({ userId: data.userId, tweetId
 
 interface FollowData { followerId: number; followedId: number; createdAt?: number }
 
-// Follows as the app uses them: the pairs and the moment of each one
+// Follows as the app uses them: the pairs and the moment of each one.
 const toFollows = (docs: FollowData[]): Pick<DataSnapshot, 'follows' | 'followedAt'> => ({
   follows: docs.map((d) => [d.followerId, d.followedId] as [number, number]),
   followedAt: Object.fromEntries(docs.filter((d) => d.createdAt).map((d) => [`${d.followerId}_${d.followedId}`, d.createdAt as number])),
@@ -115,7 +116,7 @@ export const firestoreStore: RemoteStore = {
 
   async updateProfile(userId, changes) {
     const { f, db } = await getDb();
-    // Firestore does not accept undefined values
+    // Firestore does not accept undefined values.
     const data = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined));
     await f.updateDoc(f.doc(db, 'users', String(userId)), data);
   },
