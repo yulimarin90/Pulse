@@ -1,4 +1,5 @@
-
+// Sign in, register and save the data with Firebase Authentication + Firestore.
+// The screens do not know about Firebase: they only use AuthContext and dataStore.
 import * as api from './dataStore';
 import { firebaseAuthService, getAuthErrorMessage, isWrongCredentialError } from './firebase';
 import type { AuthService, SocialProvider } from './firebase';
@@ -7,11 +8,16 @@ import type { RemoteStore } from './remoteStore';
 import type { ProfileChanges, RegisterData, User } from './types';
 
 export interface AuthBackend {
+  // The signed-in user when the page is opened again, or null.
   restoreSession(): Promise<User | null>;
+  // Null when the username or the password are wrong.
   login(username: string, password: string): Promise<User | null>;
   loginWithProvider(provider: SocialProvider): Promise<User>;
+  // Rejects with a readable message when the username or the email are already used.
   register(data: RegisterData): Promise<User>;
+  // Saves the profile details of the signed-in user and returns the updated user.
   updateProfile(userId: number, changes: ProfileChanges): Promise<User>;
+  // The person opened the notifications: everything up to now is read.
   markNotificationsSeen(userId: number): Promise<User>;
   logout(): Promise<void>;
 }
@@ -26,7 +32,6 @@ const MAX_USERNAME_ATTEMPTS = 50;
 export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): AuthBackend {
   let stopSync: (() => void) | null = null;
 
-  
   const saving = (event: api.StoreEvent): Promise<void> => {
     switch (event.type) {
       case 'tweet': return store.saveTweet(event.tweet);
@@ -38,8 +43,8 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       case 'unrepost': return store.deleteRepost(event.userId, event.tweetId);
       case 'bookmark': return store.saveBookmark(event.reaction);
       case 'unbookmark': return store.deleteBookmark(event.userId, event.tweetId);
-      case 'directMessage': return store.saveDirectMessage(event.message); 
-      default: return Promise.resolve();
+      case 'directMessage': return store.saveDirectMessage(event.message);
+      case 'deleteDirectMessage': return store.deleteDirectMessage(event.messageId);
     }
   };
 
@@ -160,4 +165,3 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
 }
 
 export const backend: AuthBackend = createFirebaseBackend({ auth: firebaseAuthService, store: firestoreStore });
-

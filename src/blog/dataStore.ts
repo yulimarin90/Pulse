@@ -1,12 +1,11 @@
 
-import type { AppNotification, ProfileChanges, Reaction, Tweet, TweetWithAuthor, User } from './types';
+import type { AppNotification, DirectMessage, ProfileChanges, Reaction, Tweet, TweetWithAuthor, User } from './types';
 
 export const MAX_TWEET_LENGTH = 280;
 export const MAX_NAME_LENGTH = 50;
 export const MAX_BIO_LENGTH = 160;
 export const MAX_LOCATION_LENGTH = 30;
 export const MAX_WEBSITE_LENGTH = 100;
-// Longest data URL of the photo of a tweet. firestore.rules uses a similar limit.
 export const MAX_TWEET_IMAGE_LENGTH = 300_000;
 
 const users: User[] = [];
@@ -17,7 +16,10 @@ const tweets: Tweet[] = [];
 const likes: Reaction[] = [];
 const reposts: Reaction[] = [];
 const bookmarks: Reaction[] = [];
+const directMessages: DirectMessage[] = [];
+export const MAX_MESSAGE_LENGTH = 1000;
 
+// The screens that must show new data right away (notifications) listen to the changes of the local data.
 let dataVersion = 0;
 const dataListeners = new Set<() => void>();
 const notifyChange = (): void => {
@@ -29,6 +31,7 @@ export function onDataChange(listener: () => void): () => void {
   return () => dataListeners.delete(listener);
 }
 export const getDataVersion = (): number => dataVersion;
+
 export const normalizeUsername = (value: string): string => value.trim().toLowerCase().replace(/^@/, '');
 export const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 export const USERNAME_PATTERN = /^[a-z0-9_]{1,30}$/;
@@ -40,6 +43,7 @@ export const newId = (): number => {
   return lastId;
 };
 
+// Changes that must also be saved outside of this file (backend.ts saves them in Firestore).
 export type StoreEvent =
   | { type: 'follow'; followerId: number; followedId: number; createdAt: number }
   | { type: 'unfollow'; followerId: number; followedId: number }
@@ -50,7 +54,8 @@ export type StoreEvent =
   | { type: 'unrepost'; userId: number; tweetId: number }
   | { type: 'bookmark'; reaction: Reaction }
   | { type: 'unbookmark'; userId: number; tweetId: number }
-  | { type: 'directMessage'; message: DirectMessage };
+  | { type: 'directMessage'; message: DirectMessage }
+  | { type: 'deleteDirectMessage'; messageId: number };
 
 const listeners = new Set<(event: StoreEvent) => void>();
 export function subscribe(listener: (event: StoreEvent) => void): () => void {
@@ -62,7 +67,6 @@ const emit = (event: StoreEvent): void => listeners.forEach((listener) => listen
 export interface DataSnapshot {
   users: User[];
   follows: Array<[number, number]>;
-  // When each follow happened, by "followerId_followedId".
   followedAt?: Record<string, number>;
   tweets: Tweet[];
   likes?: Reaction[];
@@ -71,19 +75,13 @@ export interface DataSnapshot {
   directMessages?: DirectMessage[];
 }
 
-
 // Replaces the local data with the data stored in Firestore. Follows, tweets and reactions of unknown users are ignored.
 export function loadRemoteData(data: DataSnapshot): void {
   const ids = new Set(data.users.map((u) => u.id));
   users.splice(0, users.length, ...data.users);
   follows.splice(0, follows.length, ...data.follows.filter(([a, b]) => ids.has(a) && ids.has(b)));
   tweets.splice(0, tweets.length, ...data.tweets.filter((t) => ids.has(t.userId)));
-
-  directMessages.splice(
-    0,
-    directMessages.length,
-    ...(data.directMessages ?? []).filter((m) => ids.has(m.senderId) && ids.has(m.receiverId))
-  );
+  directMessages.splice(0, directMessages.length, ...(data.directMessages ?? []).filter((m) => ids.has(m.senderId) && ids.has(m.receiverId)));
 
   const tweetIds = new Set(tweets.map((t) => t.id));
   const known = (r: Reaction) => ids.has(r.userId) && tweetIds.has(r.tweetId);
@@ -114,6 +112,7 @@ export function validateProfileChanges(changes: ProfileChanges): void {
   }
 }
 
+// Applies the changes to the local copy of the user and returns it. backend.ts saves them in Firestore first.
 export function updateUser(userId: number, changes: ProfileChanges): User {
   validateProfileChanges(changes);
   const index = users.findIndex((u) => u.id === userId);
@@ -137,6 +136,9 @@ function requireUser(id: number): User {
 const withAuthor = (tweet: Tweet): TweetWithAuthor => ({ ...tweet, author: requireUser(tweet.userId) });
 
 export const isGiphyMediaUrl = (url: string): boolean => /^https:\/\/(media[0-9]*|i)\.giphy\.com\/[^\s]+$/.test(url);
+
+// Converts the GIF link, or returns null if it is not a GIPHY link. Supports both
+// the direct link (https://media.giphy.com/media/ID/giphy.gif) and the page link (https://giphy.com/gifs/name-ID).
 export function parseGiphyLink(text: string): string | null {
   let url: URL;
   try {
@@ -171,6 +173,8 @@ export const getFollowers = (userId: number): User[] => follows
 export const isFollowing = (followerId: number, followedId: number): boolean => follows
   .some(([f, t]) => f === followerId && t === followedId);
 
+// People the user can still follow (not themselves, not followed yet) whose name or username contains the text.
+// Lowercase and without accents, so "Medellín" and "medellin" are the same when searching.
 const plain = (value: string): string => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 export function getUsersToFollow(userId: number, query = ''): User[] {
@@ -178,6 +182,14 @@ export function getUsersToFollow(userId: number, query = ''): User[] {
   return users
     .filter((u) => u.id !== userId && !isFollowing(userId, u.id))
     .filter((u) => !text || plain(u.fullName).includes(text) || u.username.includes(text))
+    .sort(byFullName);
+}
+
+export function searchUsers(userId: number, query: string): User[] {
+  const text = plain(query.trim()).replace(/^@/, '');
+  return users
+    .filter((u) => u.id !== userId)
+    .filter((u) => plain(u.fullName).includes(text) || u.username.includes(text))
     .sort(byFullName);
 }
 
@@ -213,6 +225,7 @@ function createTweet(userId: number, text: string, imageUrl?: string, replyToId?
   if (!text.trim() && !imageUrl) throw new Error('Write something before posting');
   if (text.length > MAX_TWEET_LENGTH) throw new Error(`A tweet cannot exceed ${MAX_TWEET_LENGTH} characters`);
   if (imageUrl && imageUrl.length > MAX_TWEET_IMAGE_LENGTH) throw new Error('The photo is too big, choose another one');
+  // The picture is a small photo saved as text (data:image/...) or the link of a GIF from GIPHY.
   if (imageUrl && !imageUrl.startsWith('data:image/') && !isGiphyMediaUrl(imageUrl)) throw new Error('That picture is not valid');
   const tweet: Tweet = {
     id: newId(), userId, text: text.trim(), createdAt: Date.now(),
@@ -224,8 +237,10 @@ function createTweet(userId: number, text: string, imageUrl?: string, replyToId?
   notifyChange();
 }
 
+// Throws when the tweet is empty (no text and no photo) or longer than MAX_TWEET_LENGTH characters.
 export const addTweet = (userId: number, text: string, imageUrl?: string): void => createTweet(userId, text, imageUrl);
 
+// A reply (comment) to a tweet. Same rules as a tweet; throws when the tweet does not exist.
 export function addReply(userId: number, tweetId: number, text: string, imageUrl?: string): void {
   if (!tweets.some((t) => t.id === tweetId)) throw new Error('The tweet does not exist anymore');
   createTweet(userId, text, imageUrl, tweetId);
@@ -242,6 +257,7 @@ export const getReplies = (tweetId: number): TweetWithAuthor[] => tweets
 export const getReplyCount = (tweetId: number): number => tweets.filter((t) => t.replyToId === tweetId).length;
 
 // ---------- Likes and reposts ----------
+
 export const isLiked = (userId: number, tweetId: number): boolean => likes.some((l) => l.userId === userId && l.tweetId === tweetId);
 export const isReposted = (userId: number, tweetId: number): boolean => reposts.some((r) => r.userId === userId && r.tweetId === tweetId);
 export const getLikeCount = (tweetId: number): number => likes.filter((l) => l.tweetId === tweetId).length;
@@ -308,6 +324,8 @@ export function getBookmarkedTweets(userId: number): TweetWithAuthor[] {
     .flatMap((b) => tweets.filter((t) => t.id === b.tweetId))
     .map(withAuthor);
 }
+
+// Profile tabs. Replies written by the user, tweets the user reposted (last repost first) and tweets with a photo.
 export const getRepliesByUser = (userId: number): TweetWithAuthor[] => tweets
   .filter((t) => t.userId === userId && isReply(t)).sort(byNewest).map(withAuthor);
 
@@ -345,6 +363,7 @@ export const getFollowersTweets = (userId: number): TweetWithAuthor[] => tweetsO
 
 // ---------- Notifications ----------
 
+// when the text mentions the username with an @ ("@ana", not "email@ana.com" or "@analia").
 export const mentionsUsername = (text: string, username: string): boolean => new RegExp(`(^|[^a-z0-9_])@${username}(?![a-z0-9_])`, 'i').test(text);
 
 export function getNotifications(userId: number): AppNotification[] {
@@ -395,6 +414,8 @@ export function getUnreadNotificationCount(userId: number): number {
   return getNotifications(userId).filter((n) => n.createdAt > seenAt).length;
 }
 
+// Marks all the notifications as read (local copy) and returns the user. backend.ts saves it in Firestore.
+// It is read up to now, or up to the newest notification if its date is later (the clock of another device can go ahead)
 export function markNotificationsSeen(userId: number): User {
   const index = users.findIndex((u) => u.id === userId);
   if (index === -1) throw new Error(`User ${userId} not found`);
@@ -404,56 +425,108 @@ export function markNotificationsSeen(userId: number): User {
   return users[index];
 }
 
-const directMessages: DirectMessage[] = [];
+// ---------- Private messages ----------
 
+// Sends a message. Throws when it is empty, too long, for yourself or for a user that does not exist
 export function sendDirectMessage(senderId: number, receiverId: number, text: string): DirectMessage {
-  const message: DirectMessage = {
-    id: newId(),
-    senderId,
-    receiverId,
-    text: text.trim(),
-    createdAt: Date.now(),
-  };
-
+  if (!text.trim()) throw new Error('Write a message before sending it');
+  if (text.length > MAX_MESSAGE_LENGTH) throw new Error(`A message cannot exceed ${MAX_MESSAGE_LENGTH} characters`);
+  if (senderId === receiverId) throw new Error('You cannot send a message to yourself');
+  requireUser(receiverId);
+  const message: DirectMessage = { id: newId(), senderId, receiverId, text: text.trim(), createdAt: Date.now() };
   directMessages.push(message);
-  
   emit({ type: 'directMessage', message });
-
+  notifyChange();
   return message;
 }
 
+// Deletes a message you sent (the other person does not see it anymore either). Throws when it is not yours
+export function deleteDirectMessage(userId: number, messageId: number): void {
+  const index = directMessages.findIndex((m) => m.id === messageId);
+  if (index === -1) return;
+  if (directMessages[index].senderId !== userId) throw new Error('You can only delete your own messages');
+  directMessages.splice(index, 1);
+  emit({ type: 'deleteDirectMessage', messageId });
+  notifyChange();
+}
+
+// The messages between two people, oldest first
 export function getConversation(userId1: number, userId2: number): DirectMessage[] {
   return directMessages
-    .filter(
-      (m) => 
-        (m.senderId === userId1 && m.receiverId === userId2) ||
-        (m.senderId === userId2 && m.receiverId === userId1)
-    )
+    .filter((m) => (m.senderId === userId1 && m.receiverId === userId2) || (m.senderId === userId2 && m.receiverId === userId1))
     .sort((a, b) => a.createdAt - b.createdAt);
 }
 
+// One row per person the user talked with, with the last message, the newest conversation first
 export function getConversationsList(currentUserId: number): { user: User; lastMessage: DirectMessage }[] {
-  const userMap = new Map<number, DirectMessage>();
-
-  directMessages.forEach((m) => {
+  const lastByPartner = new Map<number, DirectMessage>();
+  for (const m of directMessages) {
+    if (m.senderId !== currentUserId && m.receiverId !== currentUserId) continue;
     const partnerId = m.senderId === currentUserId ? m.receiverId : m.senderId;
-    if (m.senderId === currentUserId || m.receiverId === currentUserId) {
-      const existing = userMap.get(partnerId);
-      if (!existing || m.createdAt > existing.createdAt) {
-        userMap.set(partnerId, m);
-      }
-    }
-  });
-
+    const existing = lastByPartner.get(partnerId);
+    if (!existing || m.createdAt > existing.createdAt) lastByPartner.set(partnerId, m);
+  }
   const list: { user: User; lastMessage: DirectMessage }[] = [];
-  userMap.forEach((lastMessage, partnerId) => {
+  lastByPartner.forEach((lastMessage, partnerId) => {
     const user = getUserById(partnerId);
-    if (user) {
-      list.push({ user, lastMessage });
-    }
+    if (user) list.push({ user, lastMessage });
   });
-
   return list.sort((a, b) => b.lastMessage.createdAt - a.lastMessage.createdAt);
 }
 
+// ---------- Unread messages ----------
 
+
+interface ReadState { since: number; read: Record<string, number> }
+const readStates = new Map<number, ReadState>();
+const readStateKey = (userId: number): string => `pulse.messagesRead.${userId}`;
+
+function saveReadState(userId: number, state: ReadState): void {
+  readStates.set(userId, state);
+  try {
+    localStorage.setItem(readStateKey(userId), JSON.stringify(state));
+  } catch {
+    // Without localStorage the count still works until the page is reloaded.
+  }
+}
+
+function getReadState(userId: number): ReadState {
+  const known = readStates.get(userId);
+  if (known) return known;
+  try {
+    const saved = JSON.parse(localStorage.getItem(readStateKey(userId)) ?? 'null');
+    if (saved && typeof saved.since === 'number' && typeof saved.read === 'object') {
+      readStates.set(userId, saved);
+      return saved;
+    }
+  } catch {
+    // Nothing saved, or localStorage is not available.
+  }
+  const fresh: ReadState = { since: Date.now(), read: {} };
+  saveReadState(userId, fresh);
+  return fresh;
+}
+
+// The people whose messages you have not opened yet.
+function unreadPartners(userId: number): Set<number> {
+  const state = getReadState(userId);
+  const partners = new Set<number>();
+  for (const m of directMessages) {
+    if (m.receiverId === userId && m.createdAt > (state.read[m.senderId] ?? state.since)) partners.add(m.senderId);
+  }
+  return partners;
+}
+
+// Number of conversations with messages you have not read: the number on the messages icon.
+export const getUnreadConversationCount = (userId: number): number => unreadPartners(userId).size;
+
+export const hasUnreadMessages = (userId: number, partnerId: number): boolean => unreadPartners(userId).has(partnerId);
+
+// Marks the conversation as read (up to now, or up to the newest message if its date is later).
+export function markConversationRead(userId: number, partnerId: number): void {
+  if (!unreadPartners(userId).has(partnerId)) return;
+  const state = getReadState(userId);
+  const newest = getConversation(userId, partnerId).at(-1)?.createdAt ?? 0;
+  saveReadState(userId, { ...state, read: { ...state.read, [partnerId]: Math.max(Date.now(), newest) } });
+  notifyChange();
+}

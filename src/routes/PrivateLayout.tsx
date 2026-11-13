@@ -1,8 +1,19 @@
-
 import { Navigate, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../blog/AuthContext';
 import Header from '../ui/components/Header';
 import NotificationsBadge from '../ui/components/NotificationsBadge';
+import * as api from '../blog/dataStore';
+import useDataVersion from '../blog/useDataVersion';
+
+
+// Number of conversations with unread messages, shown on the messages icon. Nothing when there are none
+function MessagesBadge() {
+  const { currentUser } = useAuth();
+  useDataVersion();
+  const count = currentUser ? api.getUnreadConversationCount(currentUser.id) : 0;
+  if (count === 0) return null;
+  return <span className="notif-badge" aria-label={`${count} unread conversations`}>{count > 99 ? '99+' : count}</span>;
+}
 
 export default function PrivateLayout() {
   const { currentUser } = useAuth();
@@ -29,6 +40,7 @@ export default function PrivateLayout() {
         </Link>
         <Link to="/messages" className="nav-icon-btn" title="Messages">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff"><path d="M19.25 3.25H4.75C3.5 3.25 2.5 4.25 2.5 5.5v13c0 1.25 1 2.25 2.25 2.25h14.5c1.25 0 2.25-1 2.25-2.25v-13c0-1.25-1-2.25-2.25-2.25zm-14.5 1.5h14.5c.41 0 .75.34.75.75v1.2l-7.98 5.32c-.17.11-.39.11-.54 0L4 6.7V5.5c0-.41.34-.75.75-.75zm14.5 14.5H4.75c-.41 0-.75-.34-.75-.75V8.5l7.48 4.99c.75.5 1.75.5 2.5 0L21.5 8.5v10.5c0 .41-.34.75-.75.75z"/></svg>
+          <MessagesBadge />
         </Link>
       </nav>
     </>

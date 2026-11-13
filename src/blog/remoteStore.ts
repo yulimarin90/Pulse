@@ -1,15 +1,14 @@
-
-/* Firestore access. Collections:
-   users/{id}               
-   usernames/{username}     
-   follows/{followerId}_{followedId}  
-   tweets/{id}                         
-   likes/{userId}_{tweetId}            
-   reposts/{userId}_{tweetId}          
-   bookmarks/{userId}_{tweetId} */     
-     
+// Firestore access. Collections:
+//   users/{id}               profile of every user (plus the Firebase uid of its owner)
+//   usernames/{username}     lets a person sign in by username and keeps usernames unique
+//   follows/{followerId}_{followedId}   (with createdAt, to tell when somebody followed)
+//   tweets/{id}                         (with an optional imageUrl and, for replies, the replyToId)
+//   likes/{userId}_{tweetId}            (with createdAt)
+//   reposts/{userId}_{tweetId}          (with createdAt)
+//   directMessages/{id}                 (private messages: id, senderId, receiverId, text, createdAt)
+//   bookmarks/{userId}_{tweetId}        (saved tweets, with createdAt; only their owner can read them)
 import type { DataSnapshot } from './dataStore';
-import type { ProfileChanges, Reaction, Tweet, User, DirectMessage } from './types';
+import type { DirectMessage, ProfileChanges, Reaction, Tweet, User } from './types';
 import { getFirebaseApp } from './firebase';
 
 export class UsernameTakenError extends Error {
@@ -22,8 +21,10 @@ export class UsernameTakenError extends Error {
 // What the app needs from the database. Tests replace it with a fake one.
 export interface RemoteStore {
   getEmailByUsername(username: string): Promise<string | null>;
+  // Saves the profile and reserves the username in one step. Throws UsernameTakenError when it is taken.
   createProfile(profile: User, uid: string): Promise<void>;
   findProfileByUid(uid: string): Promise<User | null>;
+  // The bookmarks are private, so only the ones of the given user are loaded.
   loadAll(userId: number): Promise<DataSnapshot>;
   updateProfile(userId: number, changes: ProfileChanges): Promise<void>;
   saveFollow(followerId: number, followedId: number, createdAt: number): Promise<void>;
@@ -33,13 +34,16 @@ export interface RemoteStore {
   deleteLike(userId: number, tweetId: number): Promise<void>;
   saveRepost(reaction: Reaction): Promise<void>;
   deleteRepost(userId: number, tweetId: number): Promise<void>;
+  saveDirectMessage(message: DirectMessage): Promise<void>;
+  deleteDirectMessage(messageId: number): Promise<void>;
   saveBookmark(reaction: Reaction): Promise<void>;
   deleteBookmark(userId: number, tweetId: number): Promise<void>;
+  // Saves the moment when the person opened the notifications for the last time.
   saveNotificationsSeen(userId: number, seenAt: number): Promise<void>;
-  saveDirectMessage(message: DirectMessage): Promise<void>;
+  // Calls onData with all the data every time something changes in Firestore (for example, a new follower or tweet).
+  // Returns the function that stops listening.
   listen(onData: (data: DataSnapshot) => void, userId: number): () => void;
 }
-
 
 async function getDb() {
   const firestore = await import('firebase/firestore');
@@ -66,15 +70,11 @@ const toTweet = (data: Tweet): Tweet => {
   };
 };
 
-const toReaction = (data: Reaction): Reaction => ({ userId: data.userId, tweetId: data.tweetId, createdAt: data.createdAt });
-
 const toDirectMessage = (data: DirectMessage): DirectMessage => ({
-  id: data.id,
-  senderId: data.senderId,
-  receiverId: data.receiverId,
-  text: data.text,
-  createdAt: data.createdAt,
+  id: data.id, senderId: data.senderId, receiverId: data.receiverId, text: data.text, createdAt: data.createdAt,
 });
+
+const toReaction = (data: Reaction): Reaction => ({ userId: data.userId, tweetId: data.tweetId, createdAt: data.createdAt });
 
 interface FollowData { followerId: number; followedId: number; createdAt?: number }
 
@@ -110,7 +110,7 @@ export const firestoreStore: RemoteStore = {
   async loadAll(userId) {
     const { f, db } = await getDb();
     const [users, follows, tweets, likes, reposts, directMessages] = await Promise.all(
-      ['users', 'follows', 'tweets', 'likes', 'reposts','directMessages'].map((name) => f.getDocs(f.collection(db, name))),
+      ['users', 'follows', 'tweets', 'likes', 'reposts', 'directMessages'].map((name) => f.getDocs(f.collection(db, name))),
     );
     const bookmarks = await f.getDocs(f.query(f.collection(db, 'bookmarks'), f.where('userId', '==', userId)));
     return {
@@ -120,7 +120,7 @@ export const firestoreStore: RemoteStore = {
       likes: likes.docs.map((d) => toReaction(d.data() as Reaction)),
       reposts: reposts.docs.map((d) => toReaction(d.data() as Reaction)),
       bookmarks: bookmarks.docs.map((d) => toReaction(d.data() as Reaction)),
-      directMessages: directMessages.docs.map((d) => d.data() as DirectMessage),
+      directMessages: directMessages.docs.map((d) => toDirectMessage(d.data() as DirectMessage)),
     };
   },
 
@@ -166,6 +166,16 @@ export const firestoreStore: RemoteStore = {
     await f.deleteDoc(f.doc(db, 'reposts', `${userId}_${tweetId}`));
   },
 
+  async saveDirectMessage(message) {
+    const { f, db } = await getDb();
+    await f.setDoc(f.doc(db, 'directMessages', String(message.id)), message);
+  },
+
+  async deleteDirectMessage(messageId) {
+    const { f, db } = await getDb();
+    await f.deleteDoc(f.doc(db, 'directMessages', String(messageId)));
+  },
+
   async saveBookmark(reaction) {
     const { f, db } = await getDb();
     await f.setDoc(f.doc(db, 'bookmarks', `${reaction.userId}_${reaction.tweetId}`), reaction);
@@ -181,18 +191,13 @@ export const firestoreStore: RemoteStore = {
     await f.updateDoc(f.doc(db, 'users', String(userId)), { notificationsSeenAt: seenAt });
   },
 
-  async saveDirectMessage(message) {
-    const { f, db } = await getDb();
-    await f.setDoc(f.doc(db, 'directMessages', String(message.id)), message);
-  },
-
   listen(onData, userId) {
     let stopped = false;
     let stops: Array<() => void> = [];
     getDb().then(({ f, db }) => {
       if (stopped) return;
       const latest: { users?: User[]; follows?: FollowData[]; tweets?: Tweet[]; likes?: Reaction[]; reposts?: Reaction[]; bookmarks?: Reaction[]; directMessages?: DirectMessage[] } = {};
-      // Waits until the six collections have arrived once, then sends everything on each change.
+      // Waits until the seven collections have arrived once, then sends everything on each change.
       const send = () => {
         if (!latest.users || !latest.follows || !latest.tweets || !latest.likes || !latest.reposts || !latest.bookmarks || !latest.directMessages) return;
         onData({ users: latest.users, ...toFollows(latest.follows), tweets: latest.tweets, likes: latest.likes, reposts: latest.reposts, bookmarks: latest.bookmarks, directMessages: latest.directMessages });
@@ -204,8 +209,8 @@ export const firestoreStore: RemoteStore = {
         f.onSnapshot(f.collection(db, 'tweets'), (snap) => { latest.tweets = snap.docs.map((d) => toTweet(d.data() as Tweet)); send(); }, onError),
         f.onSnapshot(f.collection(db, 'likes'), (snap) => { latest.likes = snap.docs.map((d) => toReaction(d.data() as Reaction)); send(); }, onError),
         f.onSnapshot(f.query(f.collection(db, 'bookmarks'), f.where('userId', '==', userId)), (snap) => { latest.bookmarks = snap.docs.map((d) => toReaction(d.data() as Reaction)); send(); }, onError),
-        f.onSnapshot(f.collection(db, 'reposts'), (snap) => { latest.reposts = snap.docs.map((d) => toReaction(d.data() as Reaction)); send(); }, onError),
         f.onSnapshot(f.collection(db, 'directMessages'), (snap) => { latest.directMessages = snap.docs.map((d) => toDirectMessage(d.data() as DirectMessage)); send(); }, onError),
+        f.onSnapshot(f.collection(db, 'reposts'), (snap) => { latest.reposts = snap.docs.map((d) => toReaction(d.data() as Reaction)); send(); }, onError),
       ];
     }).catch((error) => console.error('Could not listen to Firestore', error));
     return () => {

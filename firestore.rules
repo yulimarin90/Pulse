@@ -77,6 +77,17 @@ service cloud.firestore {
       allow delete: if signedIn() && ownsProfile(resource.data.userId);
     }
 
+    // Private messages: a person can only send messages as themselves (up to 1000 characters). Messages cannot be
+    // changed, and only the person who sent a message can delete it. Everybody signed in can read the collection because the app listens to it as a whole.
+    match /directMessages/{messageId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && ownsProfile(request.resource.data.senderId)
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 1000;
+      allow update: if false;
+      allow delete: if signedIn() && ownsProfile(resource.data.senderId);
+    }
+
     // A person can only post tweets as themselves: up to 280 characters, with an optional small photo.
     // A tweet needs text or a photo. A reply is a tweet with the replyToId of the tweet it answers.
     match /tweets/{tweetId} {
