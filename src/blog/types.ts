@@ -56,3 +56,13 @@ export interface AppNotification {
     tweet?: TweetWithAuthor,
     target?: TweetWithAuthor,
 }
+
+// --- Sistema de Mensajería Directa ---
+export interface DirectMessage {
+  id: number;
+  senderId: number;
+  receiverId: number;
+  text: string;
+  createdAt: number;
+}
+

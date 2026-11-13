@@ -49,7 +49,8 @@ export type StoreEvent =
   | { type: 'repost'; reaction: Reaction }
   | { type: 'unrepost'; userId: number; tweetId: number }
   | { type: 'bookmark'; reaction: Reaction }
-  | { type: 'unbookmark'; userId: number; tweetId: number };
+  | { type: 'unbookmark'; userId: number; tweetId: number }
+  | { type: 'directMessage'; message: DirectMessage };
 
 const listeners = new Set<(event: StoreEvent) => void>();
 export function subscribe(listener: (event: StoreEvent) => void): () => void {
@@ -67,7 +68,9 @@ export interface DataSnapshot {
   likes?: Reaction[];
   reposts?: Reaction[];
   bookmarks?: Reaction[];
+  directMessages?: DirectMessage[];
 }
+
 
 // Replaces the local data with the data stored in Firestore. Follows, tweets and reactions of unknown users are ignored.
 export function loadRemoteData(data: DataSnapshot): void {
@@ -75,6 +78,13 @@ export function loadRemoteData(data: DataSnapshot): void {
   users.splice(0, users.length, ...data.users);
   follows.splice(0, follows.length, ...data.follows.filter(([a, b]) => ids.has(a) && ids.has(b)));
   tweets.splice(0, tweets.length, ...data.tweets.filter((t) => ids.has(t.userId)));
+
+  directMessages.splice(
+    0,
+    directMessages.length,
+    ...(data.directMessages ?? []).filter((m) => ids.has(m.senderId) && ids.has(m.receiverId))
+  );
+
   const tweetIds = new Set(tweets.map((t) => t.id));
   const known = (r: Reaction) => ids.has(r.userId) && tweetIds.has(r.tweetId);
   likes.splice(0, likes.length, ...(data.likes ?? []).filter(known));
@@ -393,3 +403,57 @@ export function markNotificationsSeen(userId: number): User {
   notifyChange();
   return users[index];
 }
+
+const directMessages: DirectMessage[] = [];
+
+export function sendDirectMessage(senderId: number, receiverId: number, text: string): DirectMessage {
+  const message: DirectMessage = {
+    id: newId(),
+    senderId,
+    receiverId,
+    text: text.trim(),
+    createdAt: Date.now(),
+  };
+
+  directMessages.push(message);
+  
+  emit({ type: 'directMessage', message });
+
+  return message;
+}
+
+export function getConversation(userId1: number, userId2: number): DirectMessage[] {
+  return directMessages
+    .filter(
+      (m) => 
+        (m.senderId === userId1 && m.receiverId === userId2) ||
+        (m.senderId === userId2 && m.receiverId === userId1)
+    )
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+export function getConversationsList(currentUserId: number): { user: User; lastMessage: DirectMessage }[] {
+  const userMap = new Map<number, DirectMessage>();
+
+  directMessages.forEach((m) => {
+    const partnerId = m.senderId === currentUserId ? m.receiverId : m.senderId;
+    if (m.senderId === currentUserId || m.receiverId === currentUserId) {
+      const existing = userMap.get(partnerId);
+      if (!existing || m.createdAt > existing.createdAt) {
+        userMap.set(partnerId, m);
+      }
+    }
+  });
+
+  const list: { user: User; lastMessage: DirectMessage }[] = [];
+  userMap.forEach((lastMessage, partnerId) => {
+    const user = getUserById(partnerId);
+    if (user) {
+      list.push({ user, lastMessage });
+    }
+  });
+
+  return list.sort((a, b) => b.lastMessage.createdAt - a.lastMessage.createdAt);
+}
+
+

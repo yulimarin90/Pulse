@@ -13,6 +13,8 @@ import EditProfile from '../pages/EditProfile';
 import Bookmarks from '../pages/Bookmarks';
 import Notifications from '../pages/Notifications';
 import TweetDetail from '../pages/TweetDetail';
+import ChatScreen from '../pages/ChatScreen';
+import MessagesList from '../pages/MessagesList';
 
 export default function BaseRouter() {
   return (
@@ -30,7 +32,9 @@ export default function BaseRouter() {
           <Route path="/users/:username" element={<UserTweets />} />
           <Route path="/tweets/:tweetId" element={<TweetDetail />} />
           <Route path="/profile/edit" element={<EditProfile />} />
-          
+          <Route path="messages/:username" element={<ChatScreen />} />
+          <Route path="messages/" element={<MessagesList />} />
+
           {/* Rutas añadidas para los iconos de la barra inferior */}
           <Route path="/search" element={<Search />} />
           <Route path="/notifications" element={<Notifications />} />

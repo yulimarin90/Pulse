@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 // Firebase app and Firebase Authentication. The SDK is loaded only when Firebase is configured and used.
 import type { FirebaseApp } from 'firebase/app';
-
 export type SocialProvider = 'Google' | 'GitHub' | 'Facebook' | 'Microsoft';
 
 export const FIREBASE_NOT_CONFIGURED = 'Firebase is not configured. Copy .env.example to .env and add your keys.';

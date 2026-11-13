@@ -26,6 +26,7 @@ const MAX_USERNAME_ATTEMPTS = 50;
 export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): AuthBackend {
   let stopSync: (() => void) | null = null;
 
+  
   const saving = (event: api.StoreEvent): Promise<void> => {
     switch (event.type) {
       case 'tweet': return store.saveTweet(event.tweet);
@@ -37,6 +38,8 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
       case 'unrepost': return store.deleteRepost(event.userId, event.tweetId);
       case 'bookmark': return store.saveBookmark(event.reaction);
       case 'unbookmark': return store.deleteBookmark(event.userId, event.tweetId);
+      case 'directMessage': return store.saveDirectMessage(event.message); 
+      default: return Promise.resolve();
     }
   };
 
@@ -157,3 +160,4 @@ export function createFirebaseBackend({ auth, store }: FirebaseBackendDeps): Aut
 }
 
 export const backend: AuthBackend = createFirebaseBackend({ auth: firebaseAuthService, store: firestoreStore });
+

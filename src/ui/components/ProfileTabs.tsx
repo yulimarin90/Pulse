@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export type ProfileTab = 'posts' | 'replies' | 'reposts' | 'media';
 
 interface ProfileTabsProps {
-  // Null while the followers or following list is shown instead of the tabs.
   active: ProfileTab | null;
   onSelect: (tab: ProfileTab) => void;
 }
@@ -25,7 +25,7 @@ const TABS: Array<{ id: ProfileTab; label: string; icon: ReactNode }> = [
   },
   {
     id: 'replies',
-    label: 'Replies',
+    label: 'Message',
     icon: (
       <svg {...svgProps}>
         <path d="M12 4C7.3 4 3.5 7.1 3.5 11c0 2 1 3.8 2.7 5.1L5.5 20l4-2c.8.2 1.6.3 2.5.3 4.7 0 8.5-3.1 8.5-7S16.700 4 12 4z" />
@@ -54,8 +54,10 @@ const TABS: Array<{ id: ProfileTab; label: string; icon: ReactNode }> = [
   },
 ];
 
-// Tabs of a profile, like X: Posts (with its label) and three icon tabs.
 export default function ProfileTabs({ active, onSelect }: ProfileTabsProps) {
+  const navigate = useNavigate();
+  const { username } = useParams<{ username: string }>();
+
   return (
     <div className="feed-tabs profile-tabs" role="tablist">
       {TABS.map((tab) => (
@@ -67,7 +69,15 @@ export default function ProfileTabs({ active, onSelect }: ProfileTabsProps) {
           aria-label={tab.label}
           title={tab.label}
           className={`tab-btn ${tab.id === 'posts' ? 'tab-posts' : 'tab-icon'} ${active === tab.id ? 'active' : ''}`}
-          onClick={() => onSelect(tab.id)}
+          onClick={() => {
+            if (tab.id === 'replies') {
+              if (username) {
+                navigate(`/messages/${username}`);
+              }
+            } else {
+              onSelect(tab.id);
+            }
+          }}
         >
           {tab.icon}
           {tab.id === 'posts' && (
